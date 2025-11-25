@@ -82,7 +82,8 @@ export default function CheckoutPage() {
         customer_name: formData.name,
         customer_email: formData.email,
         customer_phone: formData.phone,
-        user_id: user?.id || null, // null for guest users
+        user_id: user?.id && isValidUUID(user.id) ? user.id : null, // null for guest users or invalid UUIDs
+        user_identifier: user?.id || null, // Store any user identifier (UUID or text)
         shipping_name: formData.name,
         shipping_street: formData.street,
         shipping_city: formData.city,
@@ -419,4 +420,9 @@ export default function CheckoutPage() {
       </div>
     </div>
   );
+}
+
+function isValidUUID(uuid: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
 }

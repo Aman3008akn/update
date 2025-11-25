@@ -20,6 +20,7 @@ interface Order {
   customer_email: string;
   customer_phone: string;
   user_id: string | null;
+  user_identifier?: string;
   shipping_name: string;
   shipping_street: string;
   shipping_city: string;
@@ -42,15 +43,32 @@ export default function OrdersPage() {
         
         // If user is logged in, fetch their orders from Supabase
         if (user?.id) {
-          const { data, error } = await supabase
+          console.log('Fetching orders for user:', user.id);
+          
+          // First, try to fetch with user_id (UUID)
+          let { data, error } = await supabase
             .from('orders')
             .select('*')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false });
             
-          if (error) throw error;
+          // If we get a UUID error, try with user_identifier
+          if (error && error.message.includes('uuid')) {
+            console.log('UUID error, trying with user_identifier');
+            ({ data, error } = await supabase
+              .from('orders')
+              .select('*')
+              .eq('user_identifier', user.id)
+              .order('created_at', { ascending: false }));
+          }
+          
+          if (error) {
+            console.error('Error fetching orders from Supabase:', error);
+            throw error;
+          }
           
           if (data) {
+            console.log('Orders fetched successfully:', data);
             setOrders(data);
             return;
           }
