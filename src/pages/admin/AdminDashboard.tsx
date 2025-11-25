@@ -717,6 +717,7 @@ function OrdersManagement() {
     }
   };
   useEffect(() => {
+    console.log('Initializing orders management...');
     fetchOrders();
 
     // Set up real-time subscription for orders
@@ -746,9 +747,12 @@ function OrdersManagement() {
           fetchOrders();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Real-time subscription status:', status);
+      });
 
     return () => {
+      console.log('Cleaning up subscription...');
       supabase.removeChannel(subscription);
     };
   }, []);
