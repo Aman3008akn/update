@@ -73,7 +73,7 @@ export default function CheckoutPage() {
       const shipping = totalPrice >= 50 ? 0 : 5.99;
       const total = totalPrice + shipping - discount;
       
-      // Prepare order data for Supabase
+      // Prepare order data for Supabase with all required fields
       const supabaseOrderData = {
         id: orderId,
         items: items,
@@ -82,20 +82,30 @@ export default function CheckoutPage() {
         customer_name: formData.name,
         customer_email: formData.email,
         customer_phone: formData.phone,
-        user_id: user?.id || null,
+        user_id: user?.id || null, // null for guest users
+        shipping_name: formData.name,
+        shipping_street: formData.street,
+        shipping_city: formData.city,
+        shipping_state: formData.state,
+        shipping_zip: formData.zipCode,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
       
       console.log('Attempting to save order to Supabase:', supabaseOrderData);
       
-      // Save order to Supabase (for all users)
+      // Save order to Supabase (for all users - both guest and logged in)
       const { data, error } = await supabase
         .from('orders')
         .insert([supabaseOrderData]);
         
       if (error) {
         console.error('Error saving order to Supabase:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to save order to database. Please try again.',
+          variant: 'destructive',
+        });
         // Continue with localStorage save even if Supabase fails
       } else {
         console.log('Order saved to Supabase successfully:', data);
@@ -305,19 +315,44 @@ export default function CheckoutPage() {
               <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200 shadow-lg sticky top-24">
                 <h2 className="text-xl font-bold text-[#2C3E50] mb-6">Order Summary</h2>
                 
-                <div className="space-y-3 mb-6 max-h-64 overflow-y-auto">
+                {/* Items */}
+                <div className="space-y-4 mb-6">
                   {items.map(item => (
-                    <div key={item.id} className="flex gap-3">
-                      <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-lg" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-[#2C3E50] line-clamp-1">{item.name}</p>
+                    <div key={item.id} className="flex justify-between">
+                      <div>
+                        <p className="font-medium text-[#2C3E50]">{item.name}</p>
                         <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
-                        <p className="text-sm font-semibold text-[#2C3E50]">₹{(item.price * item.quantity).toLocaleString('en-IN')}</p>
                       </div>
+                      <p className="font-medium text-[#2C3E50]">₹{(item.price * item.quantity).toLocaleString('en-IN')}</p>
                     </div>
                   ))}
                 </div>
-
+                
+                {/* Divider */}
+                <div className="border-t border-gray-300 my-4"></div>
+                
+                {/* Pricing */}
+                <div className="space-y-3 mb-6">
+                  <div className="flex justify-between text-gray-600">
+                    <span>Subtotal</span>
+                    <span>₹{totalPrice.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-600">
+                    <span>Shipping</span>
+                    <span>{shipping === 0 ? 'FREE' : `₹${shipping.toLocaleString('en-IN')}`}</span>
+                  </div>
+                  {discount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Discount</span>
+                      <span>-₹{discount.toLocaleString('en-IN')}</span>
+                    </div>
+                  )}
+                  <div className="border-t border-gray-300 pt-3 flex justify-between text-xl font-bold text-[#2C3E50]">
+                    <span>Total</span>
+                    <span>₹{total.toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+                
                 {/* Premium Coupon Section */}
                 <motion.div 
                   className="mb-6"
@@ -370,39 +405,10 @@ export default function CheckoutPage() {
                     </motion.div>
                   )}
                 </motion.div>
-
-                <div className="space-y-3 border-t border-gray-300 pt-4">
-                  <div className="flex justify-between text-gray-600">
-                    <span>Subtotal</span>
-                    <span>₹{totalPrice.toLocaleString('en-IN')}</span>
-                  </div>
-                  {discount > 0 && (
-                    <motion.div 
-                      className="flex justify-between text-green-600 font-medium"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <div className="flex items-center gap-1">
-                        <Ticket className="w-4 h-4" />
-                        <span>Discount</span>
-                      </div>
-                      <span>-₹{discount.toLocaleString('en-IN')}</span>
-                    </motion.div>
-                  )}
-                  <div className="flex justify-between text-gray-600">
-                    <span>Shipping</span>
-                    <span>{shipping === 0 ? 'FREE' : `₹${shipping.toLocaleString('en-IN')}`}</span>
-                  </div>
-                  <div className="border-t border-gray-300 pt-3 flex justify-between text-xl font-bold text-[#2C3E50]">
-                    <span>Total</span>
-                    <span>₹{total.toLocaleString('en-IN')}</span>
-                  </div>
-                </div>
-
-                <Button
+                
+                <Button 
                   type="submit"
-                  className="w-full mt-6 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white font-bold py-3 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
+                  className="w-full bg-gradient-to-r from-[#F5C842] to-amber-500 hover:from-[#F5C842]/90 hover:to-amber-500/90 text-[#2C3E50] font-bold py-4 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
                 >
                   Place Order
                 </Button>
