@@ -87,6 +87,8 @@ export default function CheckoutPage() {
         updated_at: new Date().toISOString()
       };
       
+      console.log('Attempting to save order to Supabase:', supabaseOrderData);
+      
       // Save order to Supabase (for all users)
       const { data, error } = await supabase
         .from('orders')
@@ -95,6 +97,8 @@ export default function CheckoutPage() {
       if (error) {
         console.error('Error saving order to Supabase:', error);
         // Continue with localStorage save even if Supabase fails
+      } else {
+        console.log('Order saved to Supabase successfully:', data);
       }
       
       // Prepare order data for localStorage (with additional fields for display)
@@ -111,10 +115,14 @@ export default function CheckoutPage() {
         total: total
       };
       
+      console.log('Saving order to localStorage:', localStorageOrderData);
+      
       // Save order to localStorage (fallback for all users)
       const orders = JSON.parse(localStorage.getItem('orders') || '[]');
       orders.push(localStorageOrderData);
       localStorage.setItem('orders', JSON.stringify(orders));
+      
+      console.log('Order saved to localStorage');
 
       clearCart();
       
