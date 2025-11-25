@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 
 export interface User {
   id: string;
@@ -22,66 +23,145 @@ interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('user');
-    }
-  }, [user]);
+    // Check active session
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          // Get user metadata for name
+          const { data: profile, error } = await supabase
+            .from('users')
+            .select('name, role')
+            .eq('id', session.user.id)
+            .single();
+          
+          const userData: User = {
+            id: session.user.id,
+            email: session.user.email || '',
+            name: profile?.name || session.user.email?.split('@')[0] || 'User',
+            role: (profile?.role as 'user' | 'admin') || 'user'
+          };
+          
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error('Error checking session:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        // Get user metadata for name
+        supabase
+          .from('users')
+          .select('name, role')
+          .eq('id', session.user.id)
+          .single()
+          .then(({ data: profile }) => {
+            const userData: User = {
+              id: session.user.id,
+              email: session.user.email || '',
+              name: profile?.name || session.user.email?.split('@')[0] || 'User',
+              role: (profile?.role as 'user' | 'admin') || 'user'
+            };
+            setUser(userData);
+          });
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const login = async (email: string, password: string) => {
-    // Mock login - check for admin credentials
-    if (email === 'admin@mythmanga.com' && password === 'admin123') {
-      const adminUser: User = {
-        id: 'admin-1',
-        email,
-        name: 'Admin User',
-        role: 'admin'
-      };
-      setUser(adminUser);
-      return;
-    }
-    
-    // Regular user login
-    const mockUser: User = {
-      id: `user-${Date.now()}`,
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
-      name: email.split('@')[0],
-      role: 'user'
-    };
-    setUser(mockUser);
+      password,
+    });
+
+    if (error) throw error;
+
+    if (data.user) {
+      // Get user metadata for name
+      const { data: profile } = await supabase
+        .from('users')
+        .select('name, role')
+        .eq('id', data.user.id)
+        .single();
+
+      const userData: User = {
+        id: data.user.id,
+        email: data.user.email || '',
+        name: profile?.name || email.split('@')[0] || 'User',
+        role: (profile?.role as 'user' | 'admin') || 'user'
+      };
+
+      setUser(userData);
+    }
   };
 
   const signup = async (email: string, password: string, name: string) => {
-    const newUser: User = {
-      id: `user-${Date.now()}`,
+    const { data, error } = await supabase.auth.signUp({
       email,
-      name,
-      role: 'user'
-    };
-    setUser(newUser);
+      password,
+      options: {
+        data: {
+          name,
+        }
+      }
+    });
+
+    if (error) throw error;
+
+    if (data.user) {
+      // Insert user data into users table
+      await supabase.from('users').insert([
+        {
+          id: data.user.id,
+          email: data.user.email,
+          name: name,
+          role: 'user'
+        }
+      ]);
+
+      const userData: User = {
+        id: data.user.id,
+        email: data.user.email || '',
+        name: name,
+        role: 'user'
+      };
+
+      setUser(userData);
+    }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
   };
 
   return (
     <AuthContext.Provider value={{ user, login, signup, logout, isAuthenticated: !!user }}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 }
