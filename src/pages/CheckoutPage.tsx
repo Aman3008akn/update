@@ -66,36 +66,32 @@ export default function CheckoutPage() {
     e.preventDefault();
     
     try {
-      // Mock order creation
+      // Generate order ID
       const orderId = `ORD-${Date.now()}`;
       
-      // Prepare order data
-      const orderData = {
+      // Calculate totals
+      const shipping = totalPrice >= 50 ? 0 : 5.99;
+      const total = totalPrice + shipping - discount;
+      
+      // Prepare order data for Supabase
+      const supabaseOrderData = {
         id: orderId,
-        date: new Date().toISOString(),
         items: items,
-        total: totalPrice + (totalPrice >= 50 ? 0 : 5.99) - discount,
+        total_amount: total,
         status: 'Pending',
-        shippingAddress: {
-          name: formData.name,
-          street: formData.street,
-          city: formData.city,
-          state: formData.state,
-          zipCode: formData.zipCode,
-        },
         customer_name: formData.name,
         customer_email: formData.email,
         customer_phone: formData.phone,
-        total_amount: totalPrice + (totalPrice >= 50 ? 0 : 5.99) - discount,
+        user_id: user?.id || null,
         created_at: new Date().toISOString(),
-        user_id: user?.id || null // Associate with user if logged in
+        updated_at: new Date().toISOString()
       };
       
       // Save order to Supabase (if user is logged in)
       if (user?.id) {
         const { data, error } = await supabase
           .from('orders')
-          .insert([orderData]);
+          .insert([supabaseOrderData]);
           
         if (error) {
           console.error('Error saving order to Supabase:', error);
@@ -103,9 +99,23 @@ export default function CheckoutPage() {
         }
       }
       
+      // Prepare order data for localStorage (with additional fields for display)
+      const localStorageOrderData = {
+        ...supabaseOrderData,
+        date: new Date().toISOString(),
+        shippingAddress: {
+          name: formData.name,
+          street: formData.street,
+          city: formData.city,
+          state: formData.state,
+          zipCode: formData.zipCode,
+        },
+        total: total
+      };
+      
       // Save order to localStorage (fallback for all users)
       const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-      orders.push(orderData);
+      orders.push(localStorageOrderData);
       localStorage.setItem('orders', JSON.stringify(orders));
 
       clearCart();

@@ -24,14 +24,42 @@ END $$;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for orders table
-CREATE POLICY "Allow read access for own orders" ON orders
-FOR SELECT USING (auth.uid() = user_id OR user_id IS NULL);
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Allow read access for all users" ON orders;
+EXCEPTION 
+  WHEN undefined_object THEN RAISE NOTICE 'Policy "Allow read access for all users" does not exist';
+END $$;
+
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Allow insert for all users" ON orders;
+EXCEPTION 
+  WHEN undefined_object THEN RAISE NOTICE 'Policy "Allow insert for all users" does not exist';
+END $$;
+
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Allow update for all users" ON orders;
+EXCEPTION 
+  WHEN undefined_object THEN RAISE NOTICE 'Policy "Allow update for all users" does not exist';
+END $$;
+
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Allow delete for all users" ON orders;
+EXCEPTION 
+  WHEN undefined_object THEN RAISE NOTICE 'Policy "Allow delete for all users" does not exist';
+END $$;
+
+CREATE POLICY "Allow read access for all users" ON orders
+FOR SELECT USING (true);
 
 CREATE POLICY "Allow insert for all users" ON orders
 FOR INSERT WITH CHECK (true);
 
-CREATE POLICY "Allow update for own orders" ON orders
-FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Allow update for all users" ON orders
+FOR UPDATE USING (true);
 
-CREATE POLICY "Allow delete for own orders" ON orders
-FOR DELETE USING (auth.uid() = user_id);
+CREATE POLICY "Allow delete for all users" ON orders
+FOR DELETE USING (true);
