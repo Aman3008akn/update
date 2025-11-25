@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { CreditCard, MapPin, Ticket, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { supabase } from '@/lib/supabase';
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
@@ -61,38 +62,68 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Mock order creation
-    const orderId = `ORD-${Date.now()}`;
-    
-    // Save order to localStorage
-    const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-    orders.push({
-      id: orderId,
-      date: new Date().toISOString(),
-      items: items,
-      total: totalPrice + (totalPrice >= 50 ? 0 : 5.99) - discount,
-      status: 'Pending',
-      shippingAddress: {
-        name: formData.name,
-        street: formData.street,
-        city: formData.city,
-        state: formData.state,
-        zipCode: formData.zipCode,
-      },
-    });
-    localStorage.setItem('orders', JSON.stringify(orders));
+    try {
+      // Mock order creation
+      const orderId = `ORD-${Date.now()}`;
+      
+      // Prepare order data
+      const orderData = {
+        id: orderId,
+        date: new Date().toISOString(),
+        items: items,
+        total: totalPrice + (totalPrice >= 50 ? 0 : 5.99) - discount,
+        status: 'Pending',
+        shippingAddress: {
+          name: formData.name,
+          street: formData.street,
+          city: formData.city,
+          state: formData.state,
+          zipCode: formData.zipCode,
+        },
+        customer_name: formData.name,
+        customer_email: formData.email,
+        customer_phone: formData.phone,
+        total_amount: totalPrice + (totalPrice >= 50 ? 0 : 5.99) - discount,
+        created_at: new Date().toISOString(),
+        user_id: user?.id || null // Associate with user if logged in
+      };
+      
+      // Save order to Supabase (if user is logged in)
+      if (user?.id) {
+        const { data, error } = await supabase
+          .from('orders')
+          .insert([orderData]);
+          
+        if (error) {
+          console.error('Error saving order to Supabase:', error);
+          // Continue with localStorage save even if Supabase fails
+        }
+      }
+      
+      // Save order to localStorage (fallback for all users)
+      const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+      orders.push(orderData);
+      localStorage.setItem('orders', JSON.stringify(orders));
 
-    clearCart();
-    
-    toast({
-      title: 'Order placed successfully!',
-      description: `Your order #${orderId} has been confirmed.`,
-    });
+      clearCart();
+      
+      toast({
+        title: 'Order placed successfully!',
+        description: `Your order #${orderId} has been confirmed.`,
+      });
 
-    navigate(`/orders`);
+      navigate(`/orders`);
+    } catch (error) {
+      console.error('Error placing order:', error);
+      toast({
+        title: 'Error placing order',
+        description: 'There was an issue processing your order. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   if (items.length === 0) {

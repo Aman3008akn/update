@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Package } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 
 interface Order {
   id: string;
@@ -9,15 +11,60 @@ interface Order {
   total: number;
   status: string;
   shippingAddress: any;
+  created_at?: string;
+  customer_name?: string;
+  customer_email?: string;
+  total_amount?: number;
 }
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const { user } = useAuth();
 
   useEffect(() => {
-    const savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-    setOrders(savedOrders);
-  }, []);
+    const fetchOrders = async () => {
+      // If user is logged in, try to fetch from Supabase first
+      if (user?.id) {
+        try {
+          const { data, error } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+            
+          if (!error && data) {
+            // Transform Supabase data to match our Order interface
+            const transformedOrders = data.map(order => ({
+              id: order.id,
+              date: order.created_at,
+              items: order.items || [],
+              total: order.total_amount || 0,
+              status: order.status || 'Pending',
+              shippingAddress: {
+                name: order.customer_name || '',
+                street: '', // Not stored in current schema
+                city: '', // Not stored in current schema
+              },
+              created_at: order.created_at,
+              customer_name: order.customer_name,
+              customer_email: order.customer_email,
+              total_amount: order.total_amount,
+            }));
+            setOrders(transformedOrders);
+            return;
+          }
+        } catch (error) {
+          console.error('Error fetching orders from Supabase:', error);
+        }
+      }
+      
+      // Fallback to localStorage
+      const savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+      setOrders(savedOrders);
+    };
+
+    fetchOrders();
+  }, [user]);
 
   if (orders.length === 0) {
     return (
