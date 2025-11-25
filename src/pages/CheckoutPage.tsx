@@ -87,16 +87,14 @@ export default function CheckoutPage() {
         updated_at: new Date().toISOString()
       };
       
-      // Save order to Supabase (if user is logged in)
-      if (user?.id) {
-        const { data, error } = await supabase
-          .from('orders')
-          .insert([supabaseOrderData]);
-          
-        if (error) {
-          console.error('Error saving order to Supabase:', error);
-          // Continue with localStorage save even if Supabase fails
-        }
+      // Save order to Supabase (for all users)
+      const { data, error } = await supabase
+        .from('orders')
+        .insert([supabaseOrderData]);
+        
+      if (error) {
+        console.error('Error saving order to Supabase:', error);
+        // Continue with localStorage save even if Supabase fails
       }
       
       // Prepare order data for localStorage (with additional fields for display)
