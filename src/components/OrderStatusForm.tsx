@@ -62,6 +62,7 @@ export default function OrderStatusForm({ order, onSubmit, onCancel }: OrderStat
             className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 text-white"
           >
             <option value="pending">Pending</option>
+            <option value="pending_cod">Cash on Delivery</option>
             <option value="paid">Paid</option>
             <option value="refunded">Refunded</option>
             <option value="failed">Failed</option>

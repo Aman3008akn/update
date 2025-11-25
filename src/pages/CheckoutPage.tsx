@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { CreditCard, MapPin, Ticket, Sparkles } from 'lucide-react';
+import { CreditCard, MapPin, Ticket, Sparkles, Wallet } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 
@@ -35,6 +35,7 @@ export default function CheckoutPage() {
   const [discount, setDiscount] = useState(0);
   const [couponMessage, setCouponMessage] = useState('');
   const [isCouponApplied, setIsCouponApplied] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('card'); // 'card' or 'cod'
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -78,7 +79,8 @@ export default function CheckoutPage() {
         id: orderId,
         items: items,
         total_amount: total,
-        status: 'Pending',
+        status: paymentMethod === 'cod' ? 'pending' : 'processing',
+        payment_status: paymentMethod === 'cod' ? 'pending_cod' : 'paid',
         customer_name: formData.name,
         customer_email: formData.email,
         customer_phone: formData.phone,
@@ -139,7 +141,7 @@ export default function CheckoutPage() {
       
       toast({
         title: 'Order placed successfully!',
-        description: `Your order #${orderId} has been confirmed.`,
+        description: `Your order #${orderId} has been confirmed. ${paymentMethod === 'cod' ? 'You will pay cash on delivery.' : 'Payment has been processed.'}`,
       });
 
       navigate(`/orders`);
@@ -260,54 +262,126 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Payment */}
+              {/* Payment Method Selection */}
               <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200 shadow-lg">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="p-2 bg-[#F5C842]/20 rounded-lg">
                     <CreditCard className="w-5 h-5 text-[#F5C842]" />
                   </div>
-                  <h2 className="text-xl font-bold text-[#2C3E50]">Payment Information</h2>
+                  <h2 className="text-xl font-bold text-[#2C3E50]">Payment Method</h2>
                 </div>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="cardNumber">Card Number</Label>
-                    <Input
-                      id="cardNumber"
-                      name="cardNumber"
-                      placeholder="1234 5678 9012 3456"
-                      value={formData.cardNumber}
-                      onChange={handleChange}
-                      required
-                      className="mt-1"
-                    />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div 
+                    className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
+                      paymentMethod === 'card' 
+                        ? 'border-[#F5C842] bg-[#F5C842]/10' 
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                    onClick={() => setPaymentMethod('card')}
+                  >
+                    <div className="flex items-center">
+                      <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${
+                        paymentMethod === 'card' 
+                          ? 'border-[#F5C842] bg-[#F5C842]' 
+                          : 'border-gray-400'
+                      }`}>
+                        {paymentMethod === 'card' && (
+                          <div className="w-2 h-2 rounded-full bg-white"></div>
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-[#2C3E50]">Credit/Debit Card</h3>
+                        <p className="text-sm text-gray-600">Pay with your card securely</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  
+                  <div 
+                    className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
+                      paymentMethod === 'cod' 
+                        ? 'border-[#F5C842] bg-[#F5C842]/10' 
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                    onClick={() => setPaymentMethod('cod')}
+                  >
+                    <div className="flex items-center">
+                      <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${
+                        paymentMethod === 'cod' 
+                          ? 'border-[#F5C842] bg-[#F5C842]' 
+                          : 'border-gray-400'
+                      }`}>
+                        {paymentMethod === 'cod' && (
+                          <div className="w-2 h-2 rounded-full bg-white"></div>
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-[#2C3E50]">Cash on Delivery</h3>
+                        <p className="text-sm text-gray-600">Pay cash when you receive your order</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Payment Details - Only show for card payments */}
+                {paymentMethod === 'card' && (
+                  <div className="space-y-4">
                     <div>
-                      <Label htmlFor="cardExpiry">Expiry Date</Label>
+                      <Label htmlFor="cardNumber">Card Number</Label>
                       <Input
-                        id="cardExpiry"
-                        name="cardExpiry"
-                        placeholder="MM/YY"
-                        value={formData.cardExpiry}
+                        id="cardNumber"
+                        name="cardNumber"
+                        placeholder="1234 5678 9012 3456"
+                        value={formData.cardNumber}
                         onChange={handleChange}
                         required
                         className="mt-1"
                       />
                     </div>
-                    <div>
-                      <Label htmlFor="cardCvc">CVC</Label>
-                      <Input
-                        id="cardCvc"
-                        name="cardCvc"
-                        placeholder="123"
-                        value={formData.cardCvc}
-                        onChange={handleChange}
-                        required
-                        className="mt-1"
-                      />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="cardExpiry">Expiry Date</Label>
+                        <Input
+                          id="cardExpiry"
+                          name="cardExpiry"
+                          placeholder="MM/YY"
+                          value={formData.cardExpiry}
+                          onChange={handleChange}
+                          required
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="cardCvc">CVC</Label>
+                        <Input
+                          id="cardCvc"
+                          name="cardCvc"
+                          placeholder="123"
+                          value={formData.cardCvc}
+                          onChange={handleChange}
+                          required
+                          className="mt-1"
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
+                
+                {/* COD Information - Only show for COD payments */}
+                {paymentMethod === 'cod' && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-start">
+                      <Wallet className="w-5 h-5 text-blue-600 mt-0.5 mr-2" />
+                      <div>
+                        <h3 className="font-semibold text-blue-800">Cash on Delivery</h3>
+                        <p className="text-sm text-blue-700 mt-1">
+                          You will pay ₹{total.toLocaleString('en-IN')} in cash when your order is delivered. 
+                          Please ensure you have the exact amount to facilitate smooth delivery.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -411,7 +485,7 @@ export default function CheckoutPage() {
                   type="submit"
                   className="w-full bg-gradient-to-r from-[#F5C842] to-amber-500 hover:from-[#F5C842]/90 hover:to-amber-500/90 text-[#2C3E50] font-bold py-4 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
                 >
-                  Place Order
+                  {paymentMethod === 'cod' ? 'Place Order (COD)' : 'Place Order'}
                 </Button>
               </div>
             </div>
@@ -422,6 +496,7 @@ export default function CheckoutPage() {
   );
 }
 
+// Add this helper function at the top of the component or before the component
 function isValidUUID(uuid: string): boolean {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   return uuidRegex.test(uuid);

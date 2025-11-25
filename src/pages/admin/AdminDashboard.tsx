@@ -844,6 +844,8 @@ function OrdersManagement() {
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Customer</th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Amount</th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Payment</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Shipping Address</th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Date</th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
               </tr>
@@ -868,6 +870,27 @@ function OrdersManagement() {
                     }`}>
                       {order.status || 'pending'}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      order.payment_status === 'paid' 
+                        ? 'bg-green-900/50 text-green-400' 
+                        : order.payment_status === 'pending_cod' 
+                          ? 'bg-blue-900/50 text-blue-400' 
+                          : 'bg-yellow-900/50 text-yellow-400'
+                    }`}>
+                      {order.payment_status === 'pending_cod' ? 'COD' : 
+                       order.payment_status === 'paid' ? 'Paid' : 
+                       order.payment_status?.charAt(0).toUpperCase() + order.payment_status?.slice(1) || 'Pending'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-300">
+                    <div>
+                      {order.shipping_street || 'N/A'}
+                    </div>
+                    <div>
+                      {order.shipping_city}, {order.shipping_state} {order.shipping_zip}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                     {order.created_at ? new Date(order.created_at).toLocaleDateString() : 'N/A'}

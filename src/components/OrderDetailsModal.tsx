@@ -11,10 +11,11 @@ interface Order {
   customer_email: string;
   total_amount: number;
   status: string;
+  payment_status?: string;
   created_at: string;
   items: OrderItem[];
   shipping_address?: string;
-  payment_status?: string;
+  admin_note?: string;
 }
 
 interface OrderDetailsModalProps {
@@ -61,12 +62,21 @@ export default function OrderDetailsModal({ order, onClose }: OrderDetailsModalP
                 <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                   order.payment_status === 'paid' 
                     ? 'bg-green-900/50 text-green-400 border border-green-800/50' 
-                    : order.payment_status === 'pending' 
-                      ? 'bg-yellow-900/50 text-yellow-400 border border-yellow-800/50' 
-                      : 'bg-red-900/50 text-red-400 border border-red-800/50'
+                    : order.payment_status === 'pending_cod' 
+                      ? 'bg-blue-900/50 text-blue-400 border border-blue-800/50' 
+                      : order.payment_status === 'pending' 
+                        ? 'bg-yellow-900/50 text-yellow-400 border border-yellow-800/50' 
+                        : 'bg-red-900/50 text-red-400 border border-red-800/50'
                 }`}>
-                  {order.payment_status}
+                  {order.payment_status === 'pending_cod' ? 'Cash on Delivery' : order.payment_status}
                 </span>
+              </div>
+            )}
+            
+            {order.admin_note && (
+              <div>
+                <span className="text-gray-400 block">Admin Note</span>
+                <span className="font-medium text-white">{order.admin_note}</span>
               </div>
             )}
           </div>
@@ -118,6 +128,13 @@ export default function OrderDetailsModal({ order, onClose }: OrderDetailsModalP
           <span className="text-lg font-bold text-white">Total</span>
           <span className="text-xl font-bold text-yellow-400">₹{order.total_amount?.toLocaleString('en-IN')}</span>
         </div>
+        
+        {/* COD Note */}
+        {order.payment_status === 'pending_cod' && (
+          <div className="mt-4 pt-4 border-t border-gray-700">
+            <p className="text-blue-400 font-medium">✓ Cash on Delivery - Customer will pay ₹{order.total_amount?.toLocaleString('en-IN')} when delivered</p>
+          </div>
+        )}
       </div>
       
       <div className="flex justify-end pt-4">

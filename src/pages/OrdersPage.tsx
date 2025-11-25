@@ -16,6 +16,7 @@ interface Order {
   items: OrderItem[];
   total_amount: number;
   status: string;
+  payment_status: string;
   customer_name: string;
   customer_email: string;
   customer_phone: string;
@@ -162,6 +163,17 @@ export default function OrdersPage() {
                   }`}>
                     {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                   </span>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    order.payment_status === 'paid' 
+                      ? 'bg-green-100 text-green-800' 
+                      : order.payment_status === 'pending_cod' 
+                        ? 'bg-blue-100 text-blue-800' 
+                        : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {order.payment_status === 'pending_cod' ? 'Cash on Delivery' : 
+                     order.payment_status === 'paid' ? 'Paid' : 
+                     order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)}
+                  </span>
                   <span className="text-xl font-bold text-[#2C3E50]">₹{order.total_amount.toLocaleString('en-IN')}</span>
                 </div>
               </div>
@@ -197,6 +209,13 @@ export default function OrdersPage() {
                       <p className="text-sm text-gray-600">Contact: {order.customer_phone}</p>
                       <p className="text-sm text-gray-600">Email: {order.customer_email}</p>
                     </div>
+                    
+                    {/* COD Note */}
+                    {order.payment_status === 'pending_cod' && (
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <p className="text-sm text-blue-600 font-medium">✓ Cash on Delivery - Pay ₹{order.total_amount.toLocaleString('en-IN')} when delivered</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
