@@ -716,7 +716,6 @@ function OrdersManagement() {
       setTimeout(() => setNotification(null), 5000);
     }
   };
-
   useEffect(() => {
     console.log('Initializing orders management...');
     fetchOrders();
@@ -845,7 +844,6 @@ function OrdersManagement() {
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Customer</th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Amount</th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Shipping Address</th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Date</th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
               </tr>
@@ -870,14 +868,6 @@ function OrdersManagement() {
                     }`}>
                       {order.status || 'pending'}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-300">
-                    <div>
-                      {order.shipping_street || 'N/A'}
-                    </div>
-                    <div>
-                      {order.shipping_city}, {order.shipping_state} {order.shipping_zip}
-                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                     {order.created_at ? new Date(order.created_at).toLocaleDateString() : 'N/A'}
@@ -907,423 +897,6 @@ function OrdersManagement() {
         </div>
       </div>
     </div>
-  );
-}
-
-// Admin Users Component
-function AdminUsers() {
-  const [users, setUsers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  // Modal states
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
-  
-  // Notification state
-  const [notification, setNotification] = useState<{message: string, type: 'success' | 'error' | 'info' | 'warning'} | null>(null);
-
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('users')
-        .select('*');
-
-      if (error) throw error;
-      setUsers(data || []);
-    } catch (err: any) {
-      console.error('Error fetching users:', err);
-      setError(err.message || 'Failed to fetch users');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAddAdmin = async (userData: any) => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .insert([userData]);
-
-      if (error) throw error;
-      setUsers(prev => [...prev, data[0]]);
-      setIsAddModalOpen(false);
-      
-      // Show success message
-      setNotification({message: 'Admin added successfully!', type: 'success'});
-      setTimeout(() => setNotification(null), 3000);
-    } catch (err: any) {
-      console.error('Error adding admin:', err);
-      setNotification({message: 'Failed to add admin: ' + err.message, type: 'error'});
-      setTimeout(() => setNotification(null), 5000);
-    }
-  };
-
-  const handleDeleteUser = async (userId: string) => {
-    try {
-      const { error } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', userId);
-
-      if (error) throw error;
-      setUsers(users.filter(user => user.id !== userId));
-      setIsDeleteModalOpen(false);
-      setSelectedUser(null);
-      
-      // Show success message
-      setNotification({message: 'User deleted successfully!', type: 'success'});
-      setTimeout(() => setNotification(null), 3000);
-    } catch (err: any) {
-      console.error('Error deleting user:', err);
-      setNotification({message: 'Failed to delete user: ' + err.message, type: 'error'});
-      setTimeout(() => setNotification(null), 5000);
-    }
-  };
-
-  const openAddModal = () => {
-    setSelectedUser(null);
-    setIsAddModalOpen(true);
-  };
-
-  const openDeleteModal = (user: any) => {
-    setSelectedUser(user);
-    setIsDeleteModalOpen(true);
-  };
-
-  useEffect(() => {
-    fetchUsers();
-
-    // Set up real-time subscription for users
-    const subscription = supabase
-      .channel('users-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'users',
-        },
-        (payload) => {
-          console.log('New user added!', payload);
-          fetchUsers();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'users',
-        },
-        (payload) => {
-          console.log('User deleted!', payload);
-          fetchUsers();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(subscription);
-    };
-  }, []);
-
-  if (loading) return <div className="text-[#2C3E50]">Loading users...</div>;
-  if (error) return <div className="text-red-500">Error: {error}</div>;
-
-  return (
-    <div className="space-y-6">
-      {/* Notification */}
-      {notification && (
-        <Notification 
-          message={notification.message} 
-          type={notification.type} 
-          onClose={() => setNotification(null)} 
-        />
-      )}
-      
-      {/* Modals */}
-      <Modal 
-        isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)} 
-        title="Add New Admin"
-      >
-        <AddAdminForm 
-          onSubmit={handleAddAdmin} 
-          onCancel={() => setIsAddModalOpen(false)} 
-        />
-      </Modal>
-      
-      <Modal 
-        isOpen={isDeleteModalOpen} 
-        onClose={() => setIsDeleteModalOpen(false)} 
-        title="Delete User"
-      >
-        {selectedUser && (
-          <DeleteConfirmationModal 
-            itemName={selectedUser.name} 
-            onConfirm={() => handleDeleteUser(selectedUser.id)} 
-            onCancel={() => setIsDeleteModalOpen(false)} 
-          />
-        )}
-      </Modal>
-      
-      {/* Main Content */}
-      <div className="bg-gradient-to-r from-gray-900 via-black to-gray-900 rounded-2xl p-1 shadow-2xl border border-gray-700">
-        <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl p-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-500 mb-2">
-                Admin Users
-              </h2>
-              <p className="text-gray-400">Manage your premium anime merchandise admin users</p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-              <div className="relative flex-grow md:flex-grow-0">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input 
-                  type="text" 
-                  placeholder="Search users..." 
-                  className="pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 text-white placeholder-gray-500 w-full md:w-64"
-                />
-              </div>
-              <Button 
-                className="bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold py-2 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 whitespace-nowrap shadow-lg hover:shadow-yellow-500/30"
-                onClick={openAddModal}
-              >
-                <span className="flex items-center">
-                  <User className="w-4 h-4 mr-2" />
-                  <span>+ Add Admin</span>
-                </span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-700">
-            <thead className="bg-gray-800/50">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Email</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Role</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-700">
-              {users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-800/50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                    {user.name || 'N/A'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                    {user.email}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      user.role === 'admin' 
-                        ? 'bg-green-900/50 text-green-400' 
-                        : 'bg-gray-900/50 text-gray-400'
-                    }`}>
-                      {user.role || 'user'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-red-400 hover:text-red-300 hover:bg-red-900/30 border border-red-800/30 rounded-lg transition-all duration-200"
-                      onClick={() => openDeleteModal(user)}
-                    >
-                      Delete
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Site Settings Component
-function SiteSettings() {
-  const [siteSettings, setSiteSettings] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  // Modal states
-  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-  
-  // Notification state
-  const [notification, setNotification] = useState<{message: string, type: 'success' | 'error' | 'info' | 'warning'} | null>(null);
-
-  const fetchSiteSettings = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('*');
-
-      if (error) throw error;
-      setSiteSettings(data[0] || {});
-    } catch (err: any) {
-      console.error('Error fetching site settings:', err);
-      setError(err.message || 'Failed to fetch site settings');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUpdateSiteSettings = async (settingsData: any) => {
-    try {
-      const { data, error } = await supabase
-        .from('site_settings')
-        .upsert([settingsData]);
-
-      if (error) throw error;
-      setSiteSettings(data[0]);
-      setIsUpdateModalOpen(false);
-      
-      // Show success message
-      setNotification({message: 'Site settings updated successfully!', type: 'success'});
-      setTimeout(() => setNotification(null), 3000);
-    } catch (err: any) {
-      console.error('Error updating site settings:', err);
-      setNotification({message: 'Failed to update site settings: ' + err.message, type: 'error'});
-      setTimeout(() => setNotification(null), 5000);
-    }
-  };
-
-  const openUpdateModal = () => {
-    setIsUpdateModalOpen(true);
-  };
-
-  useEffect(() => {
-    fetchSiteSettings();
-
-    // Set up real-time subscription for site settings
-    const subscription = supabase
-      .channel('site-settings-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'site_settings',
-        },
-        (payload) => {
-          console.log('Site settings updated!', payload);
-          fetchSiteSettings();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(subscription);
-    };
-  }, []);
-
-  if (loading) return <div className="text-[#2C3E50]">Loading site settings...</div>;
-  if (error) return <div className="text-red-500">Error: {error}</div>;
-
-  return (
-    <div className="space-y-6">
-      {/* Notification */}
-      {notification && (
-        <Notification 
-          message={notification.message} 
-          type={notification.type} 
-          onClose={() => setNotification(null)} 
-        />
-      )}
-      
-      {/* Modals */}
-      <Modal 
-        isOpen={isUpdateModalOpen} 
-        onClose={() => setIsUpdateModalOpen(false)} 
-        title="Update Site Settings"
-      >
-        <SiteSettingsForm 
-          settings={siteSettings} 
-          onSubmit={handleUpdateSiteSettings} 
-          onCancel={() => setIsUpdateModalOpen(false)} 
-        />
-      </Modal>
-      
-      {/* Main Content */}
-      <div className="bg-gradient-to-r from-gray-900 via-black to-gray-900 rounded-2xl p-1 shadow-2xl border border-gray-700">
-        <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl p-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-500 mb-2">
-                Site Settings
-              </h2>
-              <p className="text-gray-400">Manage your premium anime merchandise site settings</p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-              <Button 
-                className="bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold py-2 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 whitespace-nowrap shadow-lg hover:shadow-yellow-500/30"
-                onClick={openUpdateModal}
-              >
-                <span className="flex items-center">
-                  <Settings className="w-4 h-4 mr-2" />
-                  <span>Update Settings</span>
-                </span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-700">
-            <thead className="bg-gray-800/50">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Key</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Value</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-700">
-              {Object.entries(siteSettings).map(([key, value]) => (
-                <tr key={key} className="hover:bg-gray-800/50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                    {key}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                    {value}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-                      Update
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
   );
 }
 
@@ -1431,8 +1004,6 @@ function CouponsManagement() {
       setTimeout(() => setNotification(null), 5000);
     }
   };
-
-}
 
   const handleDeleteCoupon = async (couponId: number) => {
     try {
@@ -2781,7 +2352,16 @@ export default function AdminDashboard() {
                 Need help?
               </p>
               <p className="text-gray-500 text-xs mt-1">Contact support team</p>
-              <Button variant="ghost" size="sm" className="w-full mt-3 text-gray-400 hover:text-white hover:bg-gray-800 border border-gray-800 rounded-lg transition-all duration-300">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="w-full mt-3 text-gray-400 hover:text-white hover:bg-gray-800 border border-gray-800 rounded-lg transition-all duration-300"
+                onClick={() => {
+                  const message = "Hello, I need help with the MythManga Admin Dashboard.";
+                  const whatsappUrl = `https://wa.me/918826817677?text=${encodeURIComponent(message)}`;
+                  window.open(whatsappUrl, '_blank');
+                }}
+              >
                 <span className="flex items-center">
                   <User className="w-4 h-4 mr-2" />
                   Get Support
