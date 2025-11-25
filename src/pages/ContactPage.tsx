@@ -59,7 +59,7 @@ export default function ContactPage() {
                   </div>
                   <div className="ml-4">
                     <h3 className="text-lg font-semibold text-[#2C3E50]">Call Us</h3>
-                    <p className="text-gray-600 mt-1">+91 8826817677</p>
+                    <p className="text-gray-600 mt-1">+91 7084317918</p>
                     <p className="text-gray-600">Monday-Friday, 9:00 AM - 6:00 PM IST</p>
                   </div>
                 </div>
