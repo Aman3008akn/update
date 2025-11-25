@@ -36,10 +36,33 @@ ALTER TABLE coupons ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for orders table
-DROP POLICY IF EXISTS "Allow read access for own orders" ON orders;
-DROP POLICY IF EXISTS "Allow insert for all users" ON orders;
-DROP POLICY IF EXISTS "Allow update for own orders" ON orders;
-DROP POLICY IF EXISTS "Allow delete for own orders" ON orders;
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Allow read access for own orders" ON orders;
+EXCEPTION 
+  WHEN undefined_object THEN RAISE NOTICE 'Policy "Allow read access for own orders" does not exist';
+END $$;
+
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Allow insert for all users" ON orders;
+EXCEPTION 
+  WHEN undefined_object THEN RAISE NOTICE 'Policy "Allow insert for all users" does not exist';
+END $$;
+
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Allow update for own orders" ON orders;
+EXCEPTION 
+  WHEN undefined_object THEN RAISE NOTICE 'Policy "Allow update for own orders" does not exist';
+END $$;
+
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Allow delete for own orders" ON orders;
+EXCEPTION 
+  WHEN undefined_object THEN RAISE NOTICE 'Policy "Allow delete for own orders" does not exist';
+END $$;
 
 CREATE POLICY "Allow read access for own orders" ON orders
 FOR SELECT USING (auth.uid() = user_id OR user_id IS NULL);
@@ -54,10 +77,33 @@ CREATE POLICY "Allow delete for own orders" ON orders
 FOR DELETE USING (auth.uid() = user_id);
 
 -- Create policies for products table
-DROP POLICY IF EXISTS "Allow read access for all users" ON products;
-DROP POLICY IF EXISTS "Allow insert for all users" ON products;
-DROP POLICY IF EXISTS "Allow update for all users" ON products;
-DROP POLICY IF EXISTS "Allow delete for all users" ON products;
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Allow read access for all users" ON products;
+EXCEPTION 
+  WHEN undefined_object THEN RAISE NOTICE 'Policy "Allow read access for all users" does not exist';
+END $$;
+
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Allow insert for all users" ON products;
+EXCEPTION 
+  WHEN undefined_object THEN RAISE NOTICE 'Policy "Allow insert for all users" does not exist';
+END $$;
+
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Allow update for all users" ON products;
+EXCEPTION 
+  WHEN undefined_object THEN RAISE NOTICE 'Policy "Allow update for all users" does not exist';
+END $$;
+
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Allow delete for all users" ON products;
+EXCEPTION 
+  WHEN undefined_object THEN RAISE NOTICE 'Policy "Allow delete for all users" does not exist';
+END $$;
 
 CREATE POLICY "Allow read access for all users" ON products
 FOR SELECT USING (true);
@@ -72,10 +118,33 @@ CREATE POLICY "Allow delete for all users" ON products
 FOR DELETE USING (true);
 
 -- Create policies for coupons table
-DROP POLICY IF EXISTS "Allow read access for all users" ON coupons;
-DROP POLICY IF EXISTS "Allow insert for all users" ON coupons;
-DROP POLICY IF EXISTS "Allow update for all users" ON coupons;
-DROP POLICY IF EXISTS "Allow delete for all users" ON coupons;
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Allow read access for all users" ON coupons;
+EXCEPTION 
+  WHEN undefined_object THEN RAISE NOTICE 'Policy "Allow read access for all users" does not exist';
+END $$;
+
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Allow insert for all users" ON coupons;
+EXCEPTION 
+  WHEN undefined_object THEN RAISE NOTICE 'Policy "Allow insert for all users" does not exist';
+END $$;
+
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Allow update for all users" ON coupons;
+EXCEPTION 
+  WHEN undefined_object THEN RAISE NOTICE 'Policy "Allow update for all users" does not exist';
+END $$;
+
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Allow delete for all users" ON coupons;
+EXCEPTION 
+  WHEN undefined_object THEN RAISE NOTICE 'Policy "Allow delete for all users" does not exist';
+END $$;
 
 CREATE POLICY "Allow read access for all users" ON coupons
 FOR SELECT USING (true);
@@ -90,10 +159,33 @@ CREATE POLICY "Allow delete for all users" ON coupons
 FOR DELETE USING (true);
 
 -- Create policies for users table
-DROP POLICY IF EXISTS "Allow read access for all users" ON users;
-DROP POLICY IF EXISTS "Allow insert for all users" ON users;
-DROP POLICY IF EXISTS "Allow update for all users" ON users;
-DROP POLICY IF EXISTS "Allow delete for all users" ON users;
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Allow read access for all users" ON users;
+EXCEPTION 
+  WHEN undefined_object THEN RAISE NOTICE 'Policy "Allow read access for all users" does not exist';
+END $$;
+
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Allow insert for all users" ON users;
+EXCEPTION 
+  WHEN undefined_object THEN RAISE NOTICE 'Policy "Allow insert for all users" does not exist';
+END $$;
+
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Allow update for all users" ON users;
+EXCEPTION 
+  WHEN undefined_object THEN RAISE NOTICE 'Policy "Allow update for all users" does not exist';
+END $$;
+
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Allow delete for all users" ON users;
+EXCEPTION 
+  WHEN undefined_object THEN RAISE NOTICE 'Policy "Allow delete for all users" does not exist';
+END $$;
 
 CREATE POLICY "Allow read access for all users" ON users
 FOR SELECT USING (true);
