@@ -124,9 +124,9 @@ export default function ProductCard({ product }: ProductCardProps) {
           
           {/* Badges */}
           <div className="absolute top-3 left-3 flex flex-col gap-2">
-            {product.badge && (
+            {product.badges && product.badges.length > 0 && (
               <Badge className="bg-[#F5C842] text-[#2C3E50] hover:bg-[#F5C842] px-2 py-1 text-xs font-semibold">
-                {product.badge}
+                {product.badges[0]}
               </Badge>
             )}
             {product.originalPrice && (

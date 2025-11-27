@@ -11,7 +11,7 @@ import { CreditCard, MapPin, Ticket, Sparkles, Wallet, User, Mail, Phone, Home, 
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { loadRazorpay, createRazorpayOrder, openRazorpayCheckout, verifyPayment } from '@/lib/razorpay';
-import { RAZORPAY_TEST_KEY } from '@/lib/config';
+import { RAZORPAY_KEY_ID } from '@/lib/config';
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
@@ -114,10 +114,10 @@ export default function CheckoutPage() {
         console.error('Error saving order to Supabase:', error);
         toast({
           title: 'Error',
-          description: 'Failed to save order to database. Please try again.',
+          description: 'Failed to save order to database. Please contact support.',
           variant: 'destructive',
         });
-        // Continue with localStorage save even if Supabase fails
+        return;
       } else {
         console.log('Order saved to Supabase successfully:', data);
       }
@@ -133,7 +133,7 @@ export default function CheckoutPage() {
           state: formData.state,
           zipCode: formData.zipCode,
         },
-        total: total
+        total: total,
       };
       
       console.log('Saving order to localStorage:', localStorageOrderData);
@@ -164,138 +164,96 @@ export default function CheckoutPage() {
   };
 
   const handleRazorpayPayment = async () => {
+    console.log("handleRazorpayPayment: start");
+    
     try {
       // Load Razorpay SDK
+      console.log('Loading Razorpay SDK...');
       const isRazorpayLoaded = await loadRazorpay();
+      console.log('Razorpay SDK loaded:', isRazorpayLoaded);
+      
       if (!isRazorpayLoaded) {
+        console.error('Failed to load Razorpay SDK');
         toast({
           title: 'Error',
-          description: 'Failed to load Razorpay. Please try again or choose another payment method.',
+          description: 'Failed to load Razorpay. Please refresh the page and try again.',
           variant: 'destructive',
         });
         return;
       }
 
       // Calculate totals
+      console.log('Calculating totals...');
       const shipping = totalPrice >= 50 ? 0 : 5.99;
       const total = totalPrice + shipping - discount;
       const totalInPaise = Math.round(total * 100); // Convert to paise
+      
+      console.log('Totals calculated:', { total, totalInPaise, shipping, discount });
 
-      // Create Razorpay order (mock implementation)
+      // Validate totals
+      if (totalInPaise <= 0) {
+        console.error('Invalid amount:', totalInPaise);
+        toast({
+          title: 'Error',
+          description: 'Invalid order amount. Please check your cart and try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Create order in backend
+      console.log('Creating Razorpay order...');
       const order = await createRazorpayOrder(totalInPaise, 'INR');
+      console.log('Razorpay order created:', order);
 
-      // Prepare handler for payment success
-      const paymentHandler = async (response: any) => {
-        try {
-          // Verify payment (in a real implementation, this would call your backend)
-          const isVerified = await verifyPayment(response.razorpay_order_id, response.razorpay_payment_id, response.razorpay_signature);
-          
-          if (!isVerified) {
-            toast({
-              title: 'Payment Verification Failed',
-              description: 'There was an issue verifying your payment. Please contact support.',
-              variant: 'destructive',
-            });
-            return;
-          }
+      // Check if we have a valid order ID
+      if (!order || !order.id) {
+        console.error('Invalid order received:', order);
+        toast({
+          title: 'Error',
+          description: 'Failed to create payment order. Please try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
 
-          // Generate order ID
-          const orderId = `ORD-${Date.now()}`;
-          
-          // Prepare order data for Supabase with all required fields
-          const supabaseOrderData = {
-            id: orderId,
-            items: items,
-            total_amount: total,
-            status: 'processing',
-            payment_status: 'paid',
-            customer_name: formData.name,
-            customer_email: formData.email,
-            customer_phone: formData.phone,
-            user_id: user?.id && isValidUUID(user.id) ? user.id : null, // null for guest users or invalid UUIDs
-            user_identifier: user?.id || null, // Store any user identifier (UUID or text)
-            shipping_name: formData.name,
-            shipping_street: formData.street,
-            shipping_city: formData.city,
-            shipping_state: formData.state,
-            shipping_zip: formData.zipCode,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-          
-          console.log('Attempting to save order to Supabase:', supabaseOrderData);
-          
-          // Save order to Supabase (for all users - both guest and logged in)
-          const { data, error } = await supabase
-            .from('orders')
-            .insert([supabaseOrderData]);
-            
-          if (error) {
-            console.error('Error saving order to Supabase:', error);
-            toast({
-              title: 'Error',
-              description: 'Failed to save order to database. Please contact support.',
-              variant: 'destructive',
-            });
-            // Continue with localStorage save even if Supabase fails
-          } else {
-            console.log('Order saved to Supabase successfully:', data);
-          }
-          
-          // Prepare order data for localStorage (with additional fields for display)
-          const localStorageOrderData = {
-            ...supabaseOrderData,
-            date: new Date().toISOString(),
-            shippingAddress: {
-              name: formData.name,
-              street: formData.street,
-              city: formData.city,
-              state: formData.state,
-              zipCode: formData.zipCode,
-            },
-            total: total,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_signature: response.razorpay_signature
-          };
-          
-          console.log('Saving order to localStorage:', localStorageOrderData);
-          
-          // Save order to localStorage (fallback for all users)
-          const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-          orders.push(localStorageOrderData);
-          localStorage.setItem('orders', JSON.stringify(orders));
-          
-          console.log('Order saved to localStorage');
-
-          clearCart();
-          
-          toast({
-            title: 'Payment Successful!',
-            description: `Your order #${orderId} has been confirmed and payment has been processed.`,
-          });
-
-          navigate(`/orders`);
-        } catch (error) {
-          console.error('Error processing payment:', error);
-          toast({
-            title: 'Error processing payment',
-            description: 'There was an issue processing your payment. Please contact support.',
-            variant: 'destructive',
-          });
-        }
-      };
-
-      // Open Razorpay checkout
-      openRazorpayCheckout({
-        key: RAZORPAY_TEST_KEY, // Using the configured test key
-        amount: totalInPaise,
-        currency: 'INR',
+      // Build Razorpay options object
+      const options = {
+        key: RAZORPAY_KEY_ID, // Using the configured live key
+        amount: order.amount,
+        currency: order.currency,
         name: 'MythManga',
         description: 'Anime Merchandise Purchase',
         image: 'https://example.com/your_logo.png',
         order_id: order.id,
-        handler: paymentHandler,
+        handler: async function (response: any) {
+          console.log('Payment success response:', response);
+          
+          // Verify the payment
+          const isVerified = await verifyPayment(
+            response.razorpay_order_id,
+            response.razorpay_payment_id,
+            response.razorpay_signature
+          );
+          
+          if (isVerified) {
+            // Handle successful payment
+            toast({
+              title: 'Payment Successful!',
+              description: 'Your payment has been processed successfully.',
+            });
+            
+            // Submit the order form
+            const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+            handleSubmit(fakeEvent);
+          } else {
+            toast({
+              title: 'Payment Verification Failed',
+              description: 'Unable to verify your payment. Please contact support.',
+              variant: 'destructive',
+            });
+          }
+        },
         prefill: {
           name: formData.name,
           email: formData.email,
@@ -306,13 +264,53 @@ export default function CheckoutPage() {
         },
         theme: {
           color: '#F5C842'
+        },
+        modal: {
+          ondismiss: function() {
+            console.log('Payment dialog closed by user');
+            toast({
+              title: 'Payment Cancelled',
+              description: 'You have cancelled the payment. You can continue shopping or try again.',
+            });
+          }
         }
+      };
+
+      // Check if Razorpay SDK is available
+      console.log("window.Razorpay:", (window as any).Razorpay);
+      if (typeof window === 'undefined' || !(window as any).Razorpay) {
+        console.error("Razorpay SDK not available");
+        toast({
+          title: 'Error',
+          description: 'Razorpay SDK not available. Please refresh the page and try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Open Razorpay checkout
+      console.log('Opening Razorpay checkout with options:', options);
+      const rzp = new (window as any).Razorpay(options);
+      
+      // Attach payment failure handler
+      rzp.on("payment.failed", function (response: any) {
+        console.error("Payment failed:", response);
+        console.error("Payment failed error details:", response.error);
+        toast({
+          title: 'Payment Failed',
+          description: `Payment failed: ${response.error.description || 'Unknown error'}. Please try again.`,
+          variant: 'destructive',
+        });
       });
-    } catch (error) {
-      console.error('Error initiating Razorpay payment:', error);
+      
+      rzp.open();
+      console.log("Razorpay checkout opened successfully");
+      console.log("handleRazorpayPayment: end");
+    } catch (error: any) {
+      console.error("Error in handleRazorpayPayment:", error);
       toast({
         title: 'Error',
-        description: 'Failed to initiate Razorpay payment. Please try again or choose another payment method.',
+        description: `Failed to initiate Razorpay payment: ${error.message}. Please try again.`,
         variant: 'destructive',
       });
     }

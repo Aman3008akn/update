@@ -46,25 +46,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .eq('id', session.user.id)
             .single();
           
-          // Special case: ensure admin@mythmanga.com always has admin role
-          let role = (profile?.role as 'user' | 'admin') || 'user';
-          if (session.user.email === 'admin@mythmanga.com' && role !== 'admin') {
-            // Update the role in the database
-            await supabase
-              .from('users')
-              .update({ role: 'admin' })
-              .eq('id', session.user.id);
-            role = 'admin';
+          // If user doesn't exist in the users table, create them
+          if (profileError && profileError.code === 'PGRST116') {
+            // User not found, create them
+            const newUser = {
+              id: session.user.id,
+              email: session.user.email || '',
+              name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+              role: session.user.email === 'admin@mythmanga.com' ? 'admin' : 'user'
+            };
+            
+            // Insert the new user
+            await supabase.from('users').insert([newUser]);
+            
+            const userData: User = {
+              id: newUser.id,
+              email: newUser.email,
+              name: newUser.name,
+              role: newUser.role as 'user' | 'admin'
+            };
+            
+            setUser(userData);
+          } else if (profile) {
+            // Special case: ensure admin@mythmanga.com always has admin role
+            let role = (profile.role as 'user' | 'admin') || 'user';
+            if (session.user.email === 'admin@mythmanga.com' && role !== 'admin') {
+              // Update the role in the database
+              await supabase
+                .from('users')
+                .update({ role: 'admin' })
+                .eq('id', session.user.id);
+              role = 'admin';
+            }
+            
+            const userData: User = {
+              id: session.user.id,
+              email: session.user.email || '',
+              name: profile.name || session.user.email?.split('@')[0] || 'User',
+              role: role
+            };
+            
+            setUser(userData);
           }
-          
-          const userData: User = {
-            id: session.user.id,
-            email: session.user.email || '',
-            name: profile?.name || session.user.email?.split('@')[0] || 'User',
-            role: role
-          };
-          
-          setUser(userData);
         }
       } catch (error) {
         console.error('Error checking session:', error);
@@ -84,14 +107,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .select('name, role')
           .eq('id', session.user.id)
           .single()
-          .then(({ data: profile }) => {
-            const userData: User = {
-              id: session.user.id,
-              email: session.user.email || '',
-              name: profile?.name || session.user.email?.split('@')[0] || 'User',
-              role: (profile?.role as 'user' | 'admin') || 'user'
-            };
-            setUser(userData);
+          .then(({ data: profile, error: profileError }) => {
+            // If user doesn't exist in the users table, create them
+            if (profileError && profileError.code === 'PGRST116') {
+              // User not found, create them
+              const newUser = {
+                id: session.user.id,
+                email: session.user.email || '',
+                name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+                role: session.user.email === 'admin@mythmanga.com' ? 'admin' : 'user'
+              };
+              
+              // Insert the new user
+              supabase
+                .from('users')
+                .insert([newUser])
+                .then(() => {
+                  const userData: User = {
+                    id: newUser.id,
+                    email: newUser.email,
+                    name: newUser.name,
+                    role: newUser.role as 'user' | 'admin'
+                  };
+                  setUser(userData);
+                });
+            } else if (profile) {
+              const userData: User = {
+                id: session.user.id,
+                email: session.user.email || '',
+                name: profile.name || session.user.email?.split('@')[0] || 'User',
+                role: (profile.role as 'user' | 'admin') || 'user'
+              };
+              setUser(userData);
+            }
           });
       } else {
         setUser(null);
@@ -119,25 +167,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('id', data.user.id)
         .single();
 
-      // Special case: ensure admin@mythmanga.com always has admin role
-      let role = (profile?.role as 'user' | 'admin') || 'user';
-      if (data.user.email === 'admin@mythmanga.com' && role !== 'admin') {
-        // Update the role in the database
-        await supabase
-          .from('users')
-          .update({ role: 'admin' })
-          .eq('id', data.user.id);
-        role = 'admin';
+      // If user doesn't exist in the users table, create them
+      if (profileError && profileError.code === 'PGRST116') {
+        // User not found, create them
+        const newUser = {
+          id: data.user.id,
+          email: data.user.email || '',
+          name: data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'User',
+          role: data.user.email === 'admin@mythmanga.com' ? 'admin' : 'user'
+        };
+        
+        // Insert the new user
+        await supabase.from('users').insert([newUser]);
+        
+        const userData: User = {
+          id: newUser.id,
+          email: newUser.email,
+          name: newUser.name,
+          role: newUser.role as 'user' | 'admin'
+        };
+        
+        setUser(userData);
+      } else if (profile) {
+        // Special case: ensure admin@mythmanga.com always has admin role
+        let role = (profile.role as 'user' | 'admin') || 'user';
+        if (data.user.email === 'admin@mythmanga.com' && role !== 'admin') {
+          // Update the role in the database
+          await supabase
+            .from('users')
+            .update({ role: 'admin' })
+            .eq('id', data.user.id);
+          role = 'admin';
+        }
+
+        const userData: User = {
+          id: data.user.id,
+          email: data.user.email || '',
+          name: profile.name || data.user.email?.split('@')[0] || 'User',
+          role: role
+        };
+
+        setUser(userData);
       }
-
-      const userData: User = {
-        id: data.user.id,
-        email: data.user.email || '',
-        name: profile?.name || email.split('@')[0] || 'User',
-        role: role
-      };
-
-      setUser(userData);
     }
   };
 
@@ -159,7 +230,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const role = email === 'admin@mythmanga.com' ? 'admin' : 'user';
       
       // Insert user data into users table
-      await supabase.from('users').insert([
+      const { error: insertError } = await supabase.from('users').insert([
         {
           id: data.user.id,
           email: data.user.email,
@@ -167,6 +238,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           role: role
         }
       ]);
+
+      // If insert fails because user already exists, update instead
+      if (insertError && insertError.code === '23505') { // Unique violation
+        await supabase
+          .from('users')
+          .update({ name: name, role: role })
+          .eq('id', data.user.id);
+      }
 
       const userData: User = {
         id: data.user.id,

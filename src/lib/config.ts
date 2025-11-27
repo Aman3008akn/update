@@ -1,6 +1,5 @@
 // Configuration file for storing API keys and other constants
 
-// Configuration file for storing API keys and other constants
-
-export const RAZORPAY_TEST_KEY = import.meta.env.VITE_RAZORPAY_TEST_KEY || 'rzp_test_YOUR_KEY_HERE';
-export const RAZORPAY_SECRET = import.meta.env.VITE_RAZORPAY_SECRET || 'YOUR_SECRET_HERE';
+// Use environment variables for security
+export const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_RkibWv2yDBQcWg';
+export const RAZORPAY_KEY_SECRET = import.meta.env.VITE_RAZORPAY_KEY_SECRET || 'G8yDbyNhiyIu0kl2O2TV2d0G';
