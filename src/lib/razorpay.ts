@@ -1,6 +1,8 @@
 // Razorpay utility functions
 // Updated to use Supabase Edge Functions instead of direct Razorpay API calls
 
+import { supabase } from '@/lib/supabase';
+
 interface RazorpayOptions {
   key: string;
   amount: number;
@@ -46,26 +48,52 @@ declare global {
 // Use Supabase Edge Functions for creating Razorpay orders
 export const createRazorpayOrder = async (amount: number, currency: string = 'INR'): Promise<any> => {
   console.log("createRazorpayOrder: start");
-  
+
   try {
     // Get Supabase URL and anon key from environment variables
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
     console.log('Supabase URL:', supabaseUrl);
-    
+
     if (!supabaseUrl) {
       throw new Error('Supabase URL is not configured');
     }
-    
+
     if (!supabaseAnonKey) {
       throw new Error('Supabase Anon Key is not configured');
     }
-    
+
+    // Get the current session to include auth token
+    let { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    console.log('Session data:', session);
+    console.log('Session error:', sessionError);
+
+    // If no session, try to refresh it
+    if (!session?.access_token) {
+      console.log('No session found, attempting to refresh...');
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      console.log('Refresh result:', refreshData);
+      console.log('Refresh error:', refreshError);
+
+      if (refreshError) {
+        throw new Error(`Authentication error: ${refreshError.message}`);
+      }
+
+      if (refreshData?.session?.access_token) {
+        session = refreshData.session;
+        console.log('Session refreshed successfully');
+      } else {
+        throw new Error('User must be authenticated to create payment orders');
+      }
+    }
+
+    console.log('Access token available:', !!session.access_token);
+
     // Extract project reference from Supabase URL
     const projectRef = new URL(supabaseUrl).hostname.split('.')[0];
     const edgeFunctionUrl = `https://${projectRef}.functions.supabase.co/create-razorpay-order`;
     console.log('Edge function URL:', edgeFunctionUrl);
-    
+
     // Call Supabase Edge Function to create Razorpay order
     console.log('Sending request to Edge function...');
     const response = await fetch(edgeFunctionUrl, {
@@ -73,9 +101,10 @@ export const createRazorpayOrder = async (amount: number, currency: string = 'IN
       headers: {
         'Content-Type': 'application/json',
         'apikey': supabaseAnonKey,
+        'Authorization': `Bearer ${session.access_token}`,
       },
-      body: JSON.stringify({ 
-        amount, 
+      body: JSON.stringify({
+        amount,
         currency
       })
     });
@@ -141,26 +170,47 @@ export const loadRazorpay = (): Promise<boolean> => {
 export const verifyPayment = async (orderId: string, paymentId: string, signature: string): Promise<boolean> => {
   try {
     console.log('Verifying payment with:', { orderId, paymentId, signature });
-    
+
     // Get Supabase URL and anon key from environment variables
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
     console.log('Supabase URL:', supabaseUrl);
-    
+
     if (!supabaseUrl) {
       throw new Error('Supabase URL is not configured');
     }
-    
+
     if (!supabaseAnonKey) {
       throw new Error('Supabase Anon Key is not configured');
     }
-    
+
+    // Get the current session to include auth token
+    let { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+    // If no session, try to refresh it
+    if (!session?.access_token) {
+      console.log('No session found for verification, attempting to refresh...');
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+
+      if (refreshError) {
+        console.error(`Authentication error: ${refreshError.message}`);
+        return false;
+      }
+
+      if (refreshData?.session?.access_token) {
+        session = refreshData.session;
+      } else {
+        console.error('User must be authenticated to verify payments');
+        return false;
+      }
+    }
+
     // Extract project reference from Supabase URL
     const projectRef = new URL(supabaseUrl).hostname.split('.')[0];
     const edgeFunctionUrl = `https://${projectRef}.functions.supabase.co/verify-razorpay-payment`;
-    
+
     console.log('Edge function URL:', edgeFunctionUrl);
-    
+
     // Call Supabase Edge Function to verify payment
     console.log('Sending verification request to Edge function...');
     const response = await fetch(edgeFunctionUrl, {
@@ -168,11 +218,12 @@ export const verifyPayment = async (orderId: string, paymentId: string, signatur
       headers: {
         'Content-Type': 'application/json',
         'apikey': supabaseAnonKey,
+        'Authorization': `Bearer ${session.access_token}`,
       },
-      body: JSON.stringify({ 
-        order_id: orderId, 
-        payment_id: paymentId, 
-        signature: signature 
+      body: JSON.stringify({
+        order_id: orderId,
+        payment_id: paymentId,
+        signature: signature
       })
     });
     

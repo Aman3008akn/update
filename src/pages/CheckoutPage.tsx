@@ -165,13 +165,24 @@ export default function CheckoutPage() {
 
   const handleRazorpayPayment = async () => {
     console.log("handleRazorpayPayment: start");
-    
+
     try {
+      // Check if user is authenticated
+      if (!user) {
+        toast({
+          title: 'Authentication Required',
+          description: 'Please log in to proceed with Razorpay payment.',
+          variant: 'destructive',
+        });
+        navigate('/login');
+        return;
+      }
+
       // Load Razorpay SDK
       console.log('Loading Razorpay SDK...');
       const isRazorpayLoaded = await loadRazorpay();
       console.log('Razorpay SDK loaded:', isRazorpayLoaded);
-      
+
       if (!isRazorpayLoaded) {
         console.error('Failed to load Razorpay SDK');
         toast({
