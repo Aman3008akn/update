@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { CreditCard, MapPin, Ticket, Sparkles, Wallet } from 'lucide-react';
+import { CreditCard, MapPin, Ticket, Sparkles, Wallet, User, Mail, Phone, Home, Globe, Hash, User2, Mailbox, Building, Map } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { loadRazorpay, createRazorpayOrder, openRazorpayCheckout, verifyPayment } from '@/lib/razorpay';
@@ -336,91 +336,138 @@ export default function CheckoutPage() {
             {/* Forms */}
             <div className="lg:col-span-2 space-y-8">
               {/* Shipping Address */}
-              <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200 shadow-lg">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 bg-[#F5C842]/20 rounded-lg">
-                    <MapPin className="w-5 h-5 text-[#F5C842]" />
+              <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-3xl p-8 border border-gray-700 shadow-2xl transform transition-all duration-300 hover:shadow-yellow-500/20">
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="p-3 bg-gradient-to-r from-yellow-500 to-amber-500 rounded-xl shadow-lg">
+                    <MapPin className="w-6 h-6 text-black" />
                   </div>
-                  <h2 className="text-xl font-bold text-[#2C3E50]">Shipping Address</h2>
+                  <div>
+                    <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-500">
+                      Premium Shipping Address
+                    </h2>
+                    <p className="text-gray-400 text-sm">Enter your luxury delivery details</p>
+                  </div>
                 </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      required
-                      className="mt-1"
-                    />
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-gray-300 font-medium">Full Name</Label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <User className="h-5 w-5 text-yellow-500" />
+                      </div>
+                      <Input
+                        id="name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        required
+                        className="pl-10 bg-gray-800 border border-gray-700 text-white rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 py-3 transition-all duration-300"
+                        placeholder="Enter your full name"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      required
-                      className="mt-1"
-                    />
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-gray-300 font-medium">Email Address</Label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Mail className="h-5 w-5 text-yellow-500" />
+                      </div>
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
+                        className="pl-10 bg-gray-800 border border-gray-700 text-white rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 py-3 transition-all duration-300"
+                        placeholder="your.email@example.com"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      required
-                      className="mt-1"
-                    />
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-gray-300 font-medium">Phone Number</Label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Phone className="h-5 w-5 text-yellow-500" />
+                      </div>
+                      <Input
+                        id="phone"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        required
+                        className="pl-10 bg-gray-800 border border-gray-700 text-white rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 py-3 transition-all duration-300"
+                        placeholder="+91 XXXXXXXXXX"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="street">Street Address</Label>
-                    <Input
-                      id="street"
-                      name="street"
-                      value={formData.street}
-                      onChange={handleChange}
-                      required
-                      className="mt-1"
-                    />
+                  <div className="space-y-2">
+                    <Label htmlFor="street" className="text-gray-300 font-medium">Street Address</Label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Home className="h-5 w-5 text-yellow-500" />
+                      </div>
+                      <Input
+                        id="street"
+                        name="street"
+                        value={formData.street}
+                        onChange={handleChange}
+                        required
+                        className="pl-10 bg-gray-800 border border-gray-700 text-white rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 py-3 transition-all duration-300"
+                        placeholder="123 Main Street"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="city">City</Label>
-                    <Input
-                      id="city"
-                      name="city"
-                      value={formData.city}
-                      onChange={handleChange}
-                      required
-                      className="mt-1"
-                    />
+                  <div className="space-y-2">
+                    <Label htmlFor="city" className="text-gray-300 font-medium">City</Label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <MapPin className="h-5 w-5 text-yellow-500" />
+                      </div>
+                      <Input
+                        id="city"
+                        name="city"
+                        value={formData.city}
+                        onChange={handleChange}
+                        required
+                        className="pl-10 bg-gray-800 border border-gray-700 text-white rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 py-3 transition-all duration-300"
+                        placeholder="Your city"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="state">State</Label>
-                    <Input
-                      id="state"
-                      name="state"
-                      value={formData.state}
-                      onChange={handleChange}
-                      required
-                      className="mt-1"
-                    />
+                  <div className="space-y-2">
+                    <Label htmlFor="state" className="text-gray-300 font-medium">State</Label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Globe className="h-5 w-5 text-yellow-500" />
+                      </div>
+                      <Input
+                        id="state"
+                        name="state"
+                        value={formData.state}
+                        onChange={handleChange}
+                        required
+                        className="pl-10 bg-gray-800 border border-gray-700 text-white rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 py-3 transition-all duration-300"
+                        placeholder="Your state"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="zipCode">ZIP Code</Label>
-                    <Input
-                      id="zipCode"
-                      name="zipCode"
-                      value={formData.zipCode}
-                      onChange={handleChange}
-                      required
-                      className="mt-1"
-                    />
+                  <div className="space-y-2">
+                    <Label htmlFor="zipCode" className="text-gray-300 font-medium">ZIP Code</Label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Hash className="h-5 w-5 text-yellow-500" />
+                      </div>
+                      <Input
+                        id="zipCode"
+                        name="zipCode"
+                        value={formData.zipCode}
+                        onChange={handleChange}
+                        required
+                        className="pl-10 bg-gray-800 border border-gray-700 text-white rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 py-3 transition-all duration-300"
+                        placeholder="123456"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

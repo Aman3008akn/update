@@ -11,6 +11,7 @@ CREATE TABLE orders (
   customer_email TEXT,
   customer_phone TEXT,
   user_id UUID REFERENCES auth.users(id),
+  admin_note TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
