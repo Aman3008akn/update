@@ -7,17 +7,17 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 200,
-      headers: corsHeaders,
+      headers: { ...corsHeaders, "Access-Control-Allow-Methods": "POST, OPTIONS" },
     });
   }
 
   try {
     console.log('Received request to create Razorpay order');
-    
+
     // Get the request body
     const body = await req.json();
     console.log('Request body:', body);
-    
+
     const { amount, currency } = body;
 
     // Validate required fields
@@ -26,30 +26,63 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Amount and currency are required' }),
         {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json", "Access-Control-Allow-Methods": "POST, OPTIONS" },
           status: 400,
         }
       );
     }
 
-    // For now, return a mock order since we can't access environment variables in this context
-    // In a real implementation, you would use the Razorpay API here
-    const mockOrderId = `order_${Date.now()}`;
-    console.log('Creating mock order with ID:', mockOrderId);
+    // Get Razorpay credentials from environment variables
+    const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID');
+    const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
 
-    const response = {
-      id: mockOrderId,
-      amount: amount,
-      currency: currency,
-      status: 'created'
-    };
+    if (!razorpayKeyId || !razorpayKeySecret) {
+      console.error('Razorpay credentials not configured');
+      return new Response(
+        JSON.stringify({ error: 'Razorpay credentials not configured' }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json", "Access-Control-Allow-Methods": "POST, OPTIONS" },
+          status: 500,
+        }
+      );
+    }
 
-    console.log('Razorpay order created successfully:', response);
+    console.log('Creating Razorpay order with amount:', amount, 'currency:', currency);
+
+    // Create order using Razorpay API
+    const auth = btoa(`${razorpayKeyId}:${razorpayKeySecret}`);
+    const razorpayResponse = await fetch('https://api.razorpay.com/v1/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${auth}`,
+      },
+      body: JSON.stringify({
+        amount: amount,
+        currency: currency,
+        payment_capture: 1, // Auto capture payment
+      }),
+    });
+
+    if (!razorpayResponse.ok) {
+      const errorData = await razorpayResponse.text();
+      console.error('Razorpay API error:', errorData);
+      return new Response(
+        JSON.stringify({ error: 'Failed to create Razorpay order' }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json", "Access-Control-Allow-Methods": "POST, OPTIONS" },
+          status: 500,
+        }
+      );
+    }
+
+    const orderData = await razorpayResponse.json();
+    console.log('Razorpay order created:', orderData);
 
     return new Response(
-      JSON.stringify(response),
+      JSON.stringify(orderData),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Access-Control-Allow-Methods": "POST, OPTIONS" },
         status: 200,
       }
     );
@@ -58,7 +91,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: error.message }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Access-Control-Allow-Methods": "POST, OPTIONS" },
         status: 500,
       }
     );

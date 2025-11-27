@@ -48,12 +48,17 @@ export const createRazorpayOrder = async (amount: number, currency: string = 'IN
   console.log("createRazorpayOrder: start");
   
   try {
-    // Get Supabase URL from environment variables
+    // Get Supabase URL and anon key from environment variables
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
     console.log('Supabase URL:', supabaseUrl);
     
     if (!supabaseUrl) {
       throw new Error('Supabase URL is not configured');
+    }
+    
+    if (!supabaseAnonKey) {
+      throw new Error('Supabase Anon Key is not configured');
     }
     
     // Extract project reference from Supabase URL
@@ -61,26 +66,19 @@ export const createRazorpayOrder = async (amount: number, currency: string = 'IN
     const edgeFunctionUrl = `https://${projectRef}.functions.supabase.co/create-razorpay-order`;
     console.log('Edge function URL:', edgeFunctionUrl);
     
-    // Create AbortController for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-    
     // Call Supabase Edge Function to create Razorpay order
     console.log('Sending request to Edge function...');
     const response = await fetch(edgeFunctionUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'apikey': supabaseAnonKey,
       },
       body: JSON.stringify({ 
         amount, 
         currency
-      }),
-      signal: controller.signal
+      })
     });
-    
-    // Clear timeout
-    clearTimeout(timeoutId);
     
     console.log('Edge function response status:', response.status);
     console.log('Edge function response headers:', [...response.headers.entries()]);
@@ -90,18 +88,6 @@ export const createRazorpayOrder = async (amount: number, currency: string = 'IN
       const errorText = await response.text();
       console.error('Edge function error response:', errorText);
       console.error('Response status:', response.status);
-      
-      // If the function is not deployed (404), fall back to a mock implementation
-      if (response.status === 404) {
-        console.warn('Edge function not found, using mock implementation');
-        return {
-          id: `order_mock_${Date.now()}`,
-          amount: amount,
-          currency: currency,
-          status: 'created'
-        };
-      }
-      
       throw new Error(`Failed to create Razorpay order: ${response.status} - ${errorText}`);
     }
     
@@ -123,9 +109,6 @@ export const createRazorpayOrder = async (amount: number, currency: string = 'IN
     // Provide more detailed error information
     if (error instanceof TypeError && error.message.includes('fetch')) {
       throw new Error(`Network error when connecting to payment processor. Please check your internet connection and try again. (${error.message})`);
-    }
-    if (error.name === 'AbortError') {
-      throw new Error('Payment processor is taking too long to respond. Please try again.');
     }
     throw new Error(`Failed to create Razorpay order: ${error.message}`);
   }
@@ -159,12 +142,17 @@ export const verifyPayment = async (orderId: string, paymentId: string, signatur
   try {
     console.log('Verifying payment with:', { orderId, paymentId, signature });
     
-    // Get Supabase URL from environment variables
+    // Get Supabase URL and anon key from environment variables
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
     console.log('Supabase URL:', supabaseUrl);
     
     if (!supabaseUrl) {
       throw new Error('Supabase URL is not configured');
+    }
+    
+    if (!supabaseAnonKey) {
+      throw new Error('Supabase Anon Key is not configured');
     }
     
     // Extract project reference from Supabase URL
@@ -173,35 +161,22 @@ export const verifyPayment = async (orderId: string, paymentId: string, signatur
     
     console.log('Edge function URL:', edgeFunctionUrl);
     
-    // Create AbortController for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-    
     // Call Supabase Edge Function to verify payment
     console.log('Sending verification request to Edge function...');
     const response = await fetch(edgeFunctionUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'apikey': supabaseAnonKey,
       },
       body: JSON.stringify({ 
         order_id: orderId, 
         payment_id: paymentId, 
         signature: signature 
-      }),
-      signal: controller.signal
+      })
     });
     
-    // Clear timeout
-    clearTimeout(timeoutId);
-    
     console.log('Verification response status:', response.status);
-    
-    // If the function is not deployed (404), fall back to a mock implementation
-    if (response.status === 404) {
-      console.warn('Edge function not found, using mock verification');
-      return true; // Assume payment is valid in mock mode
-    }
     
     if (!response.ok) {
       const errorText = await response.text();
@@ -217,9 +192,6 @@ export const verifyPayment = async (orderId: string, paymentId: string, signatur
     // Provide more detailed error information
     if (error instanceof TypeError && error.message.includes('fetch')) {
       throw new Error(`Network error when verifying payment. Please check your internet connection and try again. (${error.message})`);
-    }
-    if (error.name === 'AbortError') {
-      throw new Error('Payment verification is taking too long. Please try again.');
     }
     return false;
   }
