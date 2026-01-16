@@ -2,6 +2,13 @@
 
 An anime merchandise e-commerce store built with React, Vite, and Supabase.
 
+## 🚀 New Features
+
+- **Complete Admin Dashboard Control** - Every single element of the website is now controllable from the admin panel
+- **Dynamic Settings** - All content, colors, features, and functionality can be changed in real-time
+- **15+ Admin Tabs** - Comprehensive settings for Basic Info, Hero Section, Announcements, Colors, Navbar, Footer, Contact, Social, WhatsApp, Notifications, Products, Checkout, Popups, SEO, and Advanced settings
+- **Real-time Updates** - Changes in admin panel reflect immediately on the website without page refresh
+
 ## Deployment to Netlify
 
 To deploy this site to Netlify:
