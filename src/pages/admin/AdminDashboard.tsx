@@ -29,6 +29,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { products as localProducts } from '@/data/products';
 import SiteSettingsForm from '@/components/admin/SiteSettingsForm';
+import ComprehensiveSettings from '@/components/admin/ComprehensiveSettings';
 
 // Admin Overview Component
 function AdminOverview() {
@@ -2494,7 +2495,7 @@ export default function AdminDashboard() {
             <Route path="/analytics" element={<AnalyticsDashboard />} />
             <Route path="/marketing" element={<MarketingTools />} />
             <Route path="/coupons" element={<CouponsManagement />} />
-            <Route path="/site-settings" element={<SiteSettingsForm />} />
+            <Route path="/site-settings" element={<ComprehensiveSettings />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>
         </main>

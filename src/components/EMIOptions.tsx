@@ -2,22 +2,39 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CreditCard, Check, Info } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 
 interface EMIOptionsProps {
   amount: number;
   onSelectEMI: (months: number, monthlyPayment: number) => void;
 }
 
-const emiPlans = [
-  { months: 3, interestRate: 0 },
-  { months: 6, interestRate: 0 },
-  { months: 9, interestRate: 12 },
-  { months: 12, interestRate: 12 },
-];
+interface EMIPlan {
+  months: number;
+  interestRate: number;
+}
 
 export default function EMIOptions({ amount, onSelectEMI }: EMIOptionsProps) {
   const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const { settings } = useSiteSettings();
+
+  // If EMI is disabled in settings, don't render
+  if (settings.emi_enabled === false) {
+    return null;
+  }
+
+  // Get EMI settings
+  const emiMinAmount = settings.emi_min_amount || 3000;
+  const emiInterestRate = settings.emi_interest_rate || 12;
+  
+  // Define EMI plans based on settings
+  const emiPlans: EMIPlan[] = [
+    { months: 3, interestRate: 0 },
+    { months: 6, interestRate: 0 },
+    { months: 9, interestRate: emiInterestRate },
+    { months: 12, interestRate: emiInterestRate },
+  ];
 
   const calculateEMI = (principal: number, months: number, rate: number) => {
     if (rate === 0) {
@@ -38,8 +55,8 @@ export default function EMIOptions({ amount, onSelectEMI }: EMIOptionsProps) {
     }
   };
 
-  // Only show EMI if amount is above ₹3000
-  if (amount < 3000) {
+  // Only show EMI if amount is above configured minimum
+  if (amount < emiMinAmount) {
     return null;
   }
 
