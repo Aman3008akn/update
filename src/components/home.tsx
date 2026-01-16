@@ -7,10 +7,36 @@ import { products as localProducts } from '@/data/products';
 import { supabase } from '@/lib/supabase';
 import CouponDisplay from '@/components/CouponDisplay';
 import { useSiteSettings } from '@/contexts/SiteSettingsContext';
+import { 
+  getTimeOfDay, 
+  getTimeBasedGreeting, 
+  getTimeBasedTheme,
+  filterProductsByTime,
+  getTimeBasedFeaturedProducts 
+} from '@/utils/timeBasedProducts';
+import { motion } from 'framer-motion';
 
 export default function Home() {
   const { settings } = useSiteSettings();
   const [products, setProducts] = useState<any[]>(localProducts);
+  const [timeOfDay, setTimeOfDay] = useState(getTimeOfDay());
+  const [timeTheme, setTimeTheme] = useState(getTimeBasedTheme());
+  const [greeting, setGreeting] = useState(getTimeBasedGreeting());
+
+  // Update time-based theme every minute
+  useEffect(() => {
+    const updateTimeTheme = () => {
+      const newTimeOfDay = getTimeOfDay();
+      if (newTimeOfDay !== timeOfDay) {
+        setTimeOfDay(newTimeOfDay);
+        setTimeTheme(getTimeBasedTheme());
+        setGreeting(getTimeBasedGreeting());
+      }
+    };
+
+    const interval = setInterval(updateTimeTheme, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, [timeOfDay]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -48,14 +74,30 @@ export default function Home() {
     };
   }, []);
 
-  const featuredProducts = products.filter(p => p.featured);
-  const newArrivals = products.filter(p => p.badges?.includes('new')).slice(0, 4);
-  const bestSellers = products.filter(p => p.badges?.includes('bestseller')).slice(0, 4);
+  // Get time-based products
+  const timeBasedProducts = filterProductsByTime(products);
+  const featuredProducts = getTimeBasedFeaturedProducts(products.filter(p => p.featured), 4);
+  const newArrivals = getTimeBasedFeaturedProducts(products.filter(p => p.badges?.includes('new')), 4);
+  const bestSellers = getTimeBasedFeaturedProducts(products.filter(p => p.badges?.includes('bestseller')), 4);
 
   return (
     <div className="min-h-screen bg-paper">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-24 px-4 sm:px-6 lg:px-8 bg-paper border-b-2 border-black">
+      {/* Hero Section with Time-Based Theme */}
+      <section className={`relative overflow-hidden py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-br ${timeTheme.bgColor} border-b-2 border-black transition-colors duration-1000`}>
+        {/* Time-Based Greeting Banner */}
+        <motion.div 
+          key={timeOfDay}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20"
+        >
+          <div className={`${timeTheme.accentColor} text-white px-6 py-2 rounded-full border-2 border-black neo-shadow font-bold text-sm flex items-center gap-2`}>
+            <span className="text-lg">{timeTheme.emoji}</span>
+            <span>{greeting}</span>
+          </div>
+        </motion.div>
+
         {/* Abstract Background Elements */}
         <div className="absolute top-20 right-0 w-64 h-64 bg-secondary rounded-full filter blur-3xl opacity-20 animate-pulse-glow"></div>
         <div className="absolute bottom-10 left-10 w-48 h-48 bg-primary rounded-full filter blur-3xl opacity-20 animate-pulse-glow"></div>
@@ -115,13 +157,24 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Featured Products */}
+      {/* Featured Products - Time Based */}
       <section className="py-20 bg-white border-b-2 border-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-end mb-16">
             <div>
-              <h2 className="text-4xl font-heading font-extrabold text-foreground uppercase tracking-tight">Featured Loot</h2>
-              <div className="h-2 w-24 bg-primary mt-2 border-2 border-black"></div>
+              <motion.div
+                key={timeOfDay}
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="flex items-center gap-3 mb-2"
+              >
+                <span className="text-4xl">{timeTheme.emoji}</span>
+                <div>
+                  <span className={`text-sm font-bold ${timeTheme.textColor} uppercase tracking-wide`}>{timeTheme.description}</span>
+                  <h2 className="text-4xl font-heading font-extrabold text-foreground uppercase tracking-tight">Featured Loot</h2>
+                </div>
+              </motion.div>
+              <div className={`h-2 w-24 ${timeTheme.accentColor} mt-2 border-2 border-black`}></div>
             </div>
             <Button variant="outline" className="neo-btn bg-white h-12">
               View All <ArrowRight className="ml-2 w-4 h-4" />
@@ -129,11 +182,16 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {featuredProducts.length > 0 ? (
-              featuredProducts.map(product => (
-                <div key={product.id} className="transform hover:-translate-y-2 transition-transform duration-200">
+              featuredProducts.map((product, index) => (
+                <motion.div 
+                  key={`${timeOfDay}-${product.id}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="transform hover:-translate-y-2 transition-transform duration-200"
+                >
                   <ProductCard product={product} />
-                  {/* Note: ProductCard needs update to match theme perfectly, but wrapper helps */}
-                </div>
+                </motion.div>
               ))
             ) : (
               <div className="col-span-4 text-center py-12 border-2 border-dashed border-gray-300 rounded-xl">
@@ -158,11 +216,16 @@ export default function Home() {
             </Button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {newArrivals.map(product => (
-              <div key={product.id} className="neo-card bg-white p-2">
-                {/* Manually overriding generic product card styles for this section if needed, or stick to default */}
+            {newArrivals.map((product, index) => (
+              <motion.div 
+                key={`${timeOfDay}-new-${product.id}`}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.1 }}
+                className="neo-card bg-white p-2"
+              >
                 <ProductCard product={product} />
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -181,8 +244,15 @@ export default function Home() {
             </Button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {bestSellers.map(product => (
-              <ProductCard key={product.id} product={product} />
+            {bestSellers.map((product, index) => (
+              <motion.div
+                key={`${timeOfDay}-best-${product.id}`}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <ProductCard product={product} />
+              </motion.div>
             ))}
           </div>
         </div>
