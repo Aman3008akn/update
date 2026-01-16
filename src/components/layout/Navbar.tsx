@@ -16,7 +16,6 @@ import { useState, useEffect, useRef } from 'react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { products } from '@/data/products';
 import { motion, AnimatePresence } from 'framer-motion';
-import ThemeToggle from '@/components/ThemeToggle';
 
 export default function Navbar() {
   const { totalItems } = useCart();
@@ -152,11 +151,6 @@ export default function Navbar() {
 
           {/* Right Side Icons */}
           <div className="flex items-center space-x-4">
-            {/* Theme Toggle */}
-            <div className="hidden sm:block">
-              <ThemeToggle />
-            </div>
-
             {/* Wishlist */}
             <Button
               variant="ghost"
