@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { ShoppingCart, Heart, Star, Truck, Shield, Package, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { products } from '@/data/products';
+import ProductRecommendations, { trackBrowsingHistory } from '@/components/ProductRecommendations';
+import ProductReviews from '@/components/ProductReviews';
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -20,6 +22,13 @@ export default function ProductPage() {
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
   const [showAnimation, setShowAnimation] = useState(false);
+
+  // Track browsing history for recommendations
+  useEffect(() => {
+    if (product) {
+      trackBrowsingHistory(product.category);
+    }
+  }, [product]);
 
   if (!product) {
     return (
@@ -271,6 +280,15 @@ export default function ProductPage() {
           </div>
         </div>
       </div>
+      
+      {/* Product Reviews */}
+      <ProductReviews productId={product.id} />
+      
+      {/* Product Recommendations */}
+      <ProductRecommendations 
+        currentProductId={product.id}
+        category={product.category}
+      />
     </div>
   );
 }

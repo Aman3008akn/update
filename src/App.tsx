@@ -9,6 +9,8 @@ import { SiteSettingsProvider } from "./contexts/SiteSettingsContext";
 import ThemeProvider from "./components/ThemeProvider";
 import { MaintenanceProvider, useMaintenance, MaintenancePage } from "./contexts/MaintenanceContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import LiveSalesNotification from "./components/LiveSalesNotification";
+import WhatsAppSupport from "./components/WhatsAppSupport";
 
 // Lazy load pages
 const CatalogPage = lazy(() => import("./pages/CatalogPage"));
@@ -70,6 +72,10 @@ function AppContent() {
         </Suspense>
       </main>
       <Footer />
+      
+      {/* Global Components */}
+      <LiveSalesNotification />
+      <WhatsAppSupport />
     </div>
   );
 }

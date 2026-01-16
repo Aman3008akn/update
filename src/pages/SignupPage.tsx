@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
+import SocialLogin from '@/components/SocialLogin';
 
 export default function SignupPage() {
   const [name, setName] = useState('');
@@ -121,6 +122,11 @@ export default function SignupPage() {
               {loading ? 'Creating account...' : 'Sign Up'}
             </Button>
           </form>
+
+          {/* Social Login */}
+          <div className="mt-6">
+            <SocialLogin />
+          </div>
 
           <div className="mt-6 text-center">
             <p className="text-gray-600">

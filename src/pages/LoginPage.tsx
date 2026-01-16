@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
+import SocialLogin from '@/components/SocialLogin';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -85,6 +86,11 @@ export default function LoginPage() {
               {loading ? 'Logging in...' : 'Login'}
             </Button>
           </form>
+
+          {/* Social Login */}
+          <div className="mt-6">
+            <SocialLogin />
+          </div>
 
           <div className="mt-6 text-center">
             <p className="text-gray-600">

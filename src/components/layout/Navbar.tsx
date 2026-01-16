@@ -12,20 +12,60 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { products } from '@/data/products';
+import { motion, AnimatePresence } from 'framer-motion';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function Navbar() {
   const { totalItems } = useCart();
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<typeof products>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  // Smart search with instant results
+  useEffect(() => {
+    if (searchQuery.trim().length > 0) {
+      const filtered = products.filter(product =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchQuery.toLowerCase())
+      ).slice(0, 5);
+      setSearchResults(filtered);
+      setShowSearchResults(true);
+    } else {
+      setSearchResults([]);
+      setShowSearchResults(false);
+    }
+  }, [searchQuery]);
+
+  // Close search results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearchResults(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      setShowSearchResults(false);
     }
+  };
+
+  const handleProductClick = (productId: string) => {
+    navigate(`/product/${productId}`);
+    setSearchQuery('');
+    setShowSearchResults(false);
   };
 
   const handleLogout = () => {
@@ -45,22 +85,78 @@ export default function Navbar() {
             <span className="text-2xl font-heading font-bold text-foreground tracking-tight">MythManga</span>
           </Link>
 
-          {/* Search Bar - Desktop */}
+          {/* Search Bar - Desktop with Smart Search */}
           <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md mx-8">
-            <div className="relative w-full group">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5 group-focus-within:text-primary transition-colors" />
+            <div ref={searchRef} className="relative w-full group">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5 group-focus-within:text-primary transition-colors z-10" />
               <Input
                 type="text"
                 placeholder="Search for loot..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => searchQuery && setShowSearchResults(true)}
                 className="pl-10 pr-4 w-full border-2 border-black rounded-lg focus:ring-0 focus:border-primary focus:neo-shadow transition-all font-medium bg-white"
               />
+              
+              {/* Smart Search Dropdown */}
+              <AnimatePresence>
+                {showSearchResults && searchResults.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute top-full mt-2 w-full bg-white border-2 border-black rounded-lg neo-shadow-lg overflow-hidden z-50"
+                  >
+                    {searchResults.map((product, index) => (
+                      <motion.div
+                        key={product.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        onClick={() => handleProductClick(product.id)}
+                        className="flex items-center gap-3 p-3 hover:bg-primary/10 cursor-pointer transition-colors border-b border-gray-200 last:border-b-0"
+                      >
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-12 h-12 object-cover rounded border border-black"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-sm text-foreground truncate">{product.name}</h4>
+                          <p className="text-xs text-gray-600">{product.category}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-sm text-primary">₹{product.price.toLocaleString('en-IN')}</p>
+                          {product.originalPrice && (
+                            <p className="text-xs text-gray-400 line-through">₹{product.originalPrice.toLocaleString('en-IN')}</p>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
+                    {searchResults.length === 5 && (
+                      <div className="p-3 text-center border-t-2 border-black bg-secondary/20">
+                        <button
+                          type="submit"
+                          className="text-sm font-bold text-primary hover:underline"
+                        >
+                          View all results →
+                        </button>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </form>
 
           {/* Right Side Icons */}
           <div className="flex items-center space-x-4">
+            {/* Theme Toggle */}
+            <div className="hidden sm:block">
+              <ThemeToggle />
+            </div>
+
             {/* Wishlist */}
             <Button
               variant="ghost"
