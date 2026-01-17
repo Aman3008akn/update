@@ -13,6 +13,7 @@ import { supabase } from '@/lib/supabase';
 import { loadRazorpay, createRazorpayOrder, openRazorpayCheckout, verifyPayment } from '@/lib/razorpay';
 import { RAZORPAY_KEY_ID } from '@/lib/config';
 import { useSiteSettings } from '@/contexts/SiteSettingsContext';
+import { EmailNotificationService } from '@/lib/emailNotifications';
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
@@ -157,6 +158,23 @@ export default function CheckoutPage() {
       console.log('Order saved to localStorage');
 
       clearCart();
+
+      // Send order received email notification
+      const orderData = {
+        id: orderId,
+        customer_name: formData.name,
+        customer_email: formData.email,
+        customer_phone: formData.phone,
+        items: items,
+        total_amount: total,
+        created_at: new Date().toISOString(),
+      };
+      
+      // Send order received notification asynchronously
+      EmailNotificationService.sendOrderReceived(orderData).catch(error => {
+        console.error('Failed to send order received email:', error);
+        // Don't show error to user as it's not critical to the order process
+      });
 
       toast({
         title: 'Order placed successfully!',
