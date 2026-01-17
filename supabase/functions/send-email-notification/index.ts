@@ -23,8 +23,8 @@ serve(async (req: Request) => {
     // Get environment variables from Deno
     const smtpHost = Deno.env.get('SMTP_HOST') || 'smtp.gmail.com'
     const smtpPort = parseInt(Deno.env.get('SMTP_PORT') || '587')
-    const smtpUser = Deno.env.get('SMTP_USER') || ''
-    const smtpPass = Deno.env.get('SMTP_PASS') || ''
+    const smtpUser = Deno.env.get('SMTP_USER') || 'mythmangastores@gmail.com'
+    const smtpPass = Deno.env.get('SMTP_PASS') || 'Aman@321'
 
     if (!smtpUser || !smtpPass) {
       return new Response(JSON.stringify({ error: 'SMTP credentials not configured' }), {
