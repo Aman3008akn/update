@@ -28,6 +28,8 @@ const ContactPage = lazy(() => import("./pages/ContactPage"));
 const ShippingPage = lazy(() => import("./pages/ShippingPage"));
 const ReturnsPage = lazy(() => import("./pages/ReturnsPage"));
 const FAQPage = lazy(() => import("./pages/FAQPage"));
+const CbseToppersPage = lazy(() => import("./pages/CbseToppersPage"));
+const CustomerSupportPage = lazy(() => import("./pages/CustomerSupportPage"));
 
 function AppContent() {
   const { isMaintenanceMode } = useMaintenance();
@@ -67,6 +69,8 @@ function AppContent() {
             <Route path="/shipping" element={<ShippingPage />} />
             <Route path="/returns" element={<ReturnsPage />} />
             <Route path="/faq" element={<FAQPage />} />
+            <Route path="/cbse-class-10th-toppers-2024-2025" element={<CbseToppersPage />} />
+            <Route path="/support" element={<CustomerSupportPage />} />
             <Route path="/admin/*" element={<AdminDashboard />} />
           </Routes>
         </Suspense>

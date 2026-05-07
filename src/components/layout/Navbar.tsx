@@ -255,6 +255,9 @@ export default function Navbar() {
                   <Link to="/catalog/accessories" className="text-xl font-heading font-bold text-foreground hover:text-primary transition-colors">
                     Accessories
                   </Link>
+                  <Link to="/support" className="text-xl font-heading font-bold text-foreground hover:text-primary transition-colors">
+                    Support
+                  </Link>
                 </div>
               </SheetContent>
             </Sheet>
@@ -283,6 +286,9 @@ export default function Navbar() {
             </Link>
             <Link to="/catalog/apparel" className="text-foreground hover:text-primary hover:underline decoration-2 underline-offset-4 transition-all">
               Apparel
+            </Link>
+            <Link to="/support" className="text-foreground hover:text-primary hover:underline decoration-2 underline-offset-4 transition-all">
+              Support
             </Link>
             <Link to="/catalog/mystery-boxes" className="text-secondary-foreground hover:text-accent hover:underline decoration-2 underline-offset-4 transition-all flex items-center">
               <span className="mr-1">🎁</span> Mystery Boxes
