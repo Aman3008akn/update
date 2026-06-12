@@ -2,16 +2,25 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaWhatsapp } from 'react-icons/fa';
 import { X } from 'lucide-react';
+import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 
 export default function WhatsAppSupport() {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
+  const { settings } = useSiteSettings();
 
-  // Replace with your WhatsApp business number
-  const whatsappNumber = '919876543210'; // Format: country code + number (no spaces/dashes)
+  // If WhatsApp is disabled in settings, don't render
+  if (settings.whatsapp_enabled === false) {
+    return null;
+  }
+
+  // Get WhatsApp number and message from settings
+  const whatsappNumber = settings.whatsapp_number || '919876543210';
+  const defaultMessage = settings.whatsapp_message || 'Hi! I need help with...';
+  const position = settings.whatsapp_position || 'bottom-right';
   
   const handleSendMessage = () => {
-    const text = message || 'Hi! I need help with...';
+    const text = message || defaultMessage;
     const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
     setIsOpen(false);
@@ -25,11 +34,28 @@ export default function WhatsAppSupport() {
     'Shipping & delivery query',
   ];
 
+  // Dynamic position classes
+  const positionClasses = position === 'bottom-left' 
+    ? 'left-6' 
+    : 'right-6';
+  
+  const chatPositionClasses = position === 'bottom-left'
+    ? 'left-6'
+    : 'right-6';
+  
+  const tooltipPositionClasses = position === 'bottom-left'
+    ? 'left-full ml-3'
+    : 'right-full mr-3';
+  
+  const tooltipArrowClasses = position === 'bottom-left'
+    ? 'left-0 -translate-x-full border-r-8 border-r-black'
+    : 'right-0 translate-x-full border-l-8 border-l-black';
+
   return (
     <>
       {/* Floating WhatsApp Button */}
       <motion.div
-        className="fixed bottom-6 right-6 z-50"
+        className={`fixed bottom-6 ${positionClasses} z-50`}
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 1 }}
@@ -66,14 +92,14 @@ export default function WhatsAppSupport() {
         {/* Tooltip */}
         {!isOpen && (
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
+            initial={{ opacity: 0, x: position === 'bottom-left' ? -20 : 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 2 }}
-            className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-white px-4 py-2 rounded-lg border-2 border-black neo-shadow whitespace-nowrap"
+            className={`absolute ${tooltipPositionClasses} top-1/2 -translate-y-1/2 bg-white px-4 py-2 rounded-lg border-2 border-black neo-shadow whitespace-nowrap`}
           >
             <p className="font-bold text-sm">Need help? Chat with us!</p>
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-l-8 border-l-black" />
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-[calc(100%-4px)] w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-l-[6px] border-l-white" />
+            <div className={`absolute ${position === 'bottom-left' ? 'left-0 -translate-x-full' : 'right-0 translate-x-full'} top-1/2 -translate-y-1/2 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent ${position === 'bottom-left' ? 'border-r-8 border-r-black' : 'border-l-8 border-l-black'}`} />
+            <div className={`absolute ${position === 'bottom-left' ? 'left-0 -translate-x-[calc(100%-4px)]' : 'right-0 translate-x-[calc(100%-4px)]'} top-1/2 -translate-y-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent ${position === 'bottom-left' ? 'border-r-[6px] border-r-white' : 'border-l-[6px] border-l-white'}`} />
           </motion.div>
         )}
       </motion.div>
@@ -86,7 +112,7 @@ export default function WhatsAppSupport() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed bottom-24 right-6 w-80 bg-white border-2 border-black rounded-lg neo-shadow-lg z-50 overflow-hidden"
+            className={`fixed bottom-24 ${chatPositionClasses} w-80 bg-white border-2 border-black rounded-lg neo-shadow-lg z-50 overflow-hidden`}
           >
             {/* Header */}
             <div className="bg-[#25D366] p-4 flex items-center justify-between border-b-2 border-black">

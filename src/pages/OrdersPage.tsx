@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { EmailNotificationService } from '@/lib/emailNotifications';
+import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface OrderItem {
   id: string;
@@ -33,9 +37,11 @@ interface Order {
 
 export default function OrdersPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -92,6 +98,94 @@ export default function OrdersPage() {
 
     fetchOrders();
   }, [user]);
+
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    if (!user || user.role !== 'admin') {
+      toast({
+        title: 'Permission Denied',
+        description: 'Only admins can update order status',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setUpdatingOrderId(orderId);
+      
+      // Update order status in Supabase
+      const { error } = await supabase
+        .from('orders')
+        .update({ 
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      // Update local state
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order.id === orderId ? { ...order, status: newStatus } : order
+        )
+      );
+
+      // Find the updated order
+      const updatedOrder = orders.find(order => order.id === orderId);
+      
+      if (updatedOrder) {
+        // Send appropriate email notification based on new status
+        const orderData = {
+          id: updatedOrder.id,
+          customer_name: updatedOrder.customer_name,
+          customer_email: updatedOrder.customer_email,
+          customer_phone: updatedOrder.customer_phone,
+          items: updatedOrder.items,
+          total_amount: updatedOrder.total_amount,
+          created_at: updatedOrder.created_at,
+          tracking_number: updatedOrder.id.substring(0, 10), // Generate a simple tracking number
+        };
+        
+        switch (newStatus) {
+          case 'shipped':
+            await EmailNotificationService.sendOrderShipped(orderData);
+            toast({
+              title: 'Order Shipped',
+              description: `Order #${orderId} marked as shipped and notification sent to customer.`,
+            });
+            break;
+          case 'delivered':
+            await EmailNotificationService.sendOrderDelivered(orderData);
+            toast({
+              title: 'Order Delivered',
+              description: `Order #${orderId} marked as delivered and notification sent to customer.`,
+            });
+            break;
+          case 'cancelled':
+            await EmailNotificationService.sendOrderCancelled(orderData);
+            toast({
+              title: 'Order Cancelled',
+              description: `Order #${orderId} marked as cancelled and notification sent to customer.`,
+            });
+            break;
+          default:
+            toast({
+              title: 'Status Updated',
+              description: `Order #${orderId} status updated to ${newStatus}.`,
+            });
+        }
+      }
+    } catch (error: any) {
+      console.error('Error updating order status:', error);
+      toast({
+        title: 'Error',
+        description: `Failed to update order status: ${error.message}`,
+        variant: 'destructive',
+      });
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -154,15 +248,36 @@ export default function OrdersPage() {
                   <p className="text-gray-600">Placed on {new Date(order.created_at).toLocaleDateString()}</p>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    order.status === 'completed' 
-                      ? 'bg-green-100 text-green-800' 
-                      : order.status === 'pending' 
-                        ? 'bg-yellow-100 text-yellow-800' 
-                        : 'bg-red-100 text-red-800'
-                  }`}>
-                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                  </span>
+                  {user?.role === 'admin' ? (
+                    <Select 
+                      value={order.status}
+                      onValueChange={(newStatus) => updateOrderStatus(order.id, newStatus)}
+                      disabled={updatingOrderId === order.id}
+                    >
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="confirmed">Confirmed</SelectItem>
+                        <SelectItem value="processing">Processing</SelectItem>
+                        <SelectItem value="shipped">Shipped</SelectItem>
+                        <SelectItem value="delivered">Delivered</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                        <SelectItem value="refunded">Refunded</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      order.status === 'completed' 
+                        ? 'bg-green-100 text-green-800' 
+                        : order.status === 'pending' 
+                          ? 'bg-yellow-100 text-yellow-800' 
+                          : 'bg-red-100 text-red-800'
+                    }`}>
+                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                    </span>
+                  )}
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                     order.payment_status === 'paid' 
                       ? 'bg-green-100 text-green-800' 

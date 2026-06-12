@@ -12,6 +12,8 @@ import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { loadRazorpay, createRazorpayOrder, openRazorpayCheckout, verifyPayment } from '@/lib/razorpay';
 import { RAZORPAY_KEY_ID } from '@/lib/config';
+import { useSiteSettings } from '@/contexts/SiteSettingsContext';
+import { EmailNotificationService } from '@/lib/emailNotifications';
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
@@ -19,6 +21,16 @@ export default function CheckoutPage() {
   const { validateCoupon } = useCoupons();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { settings } = useSiteSettings();
+
+  // Get payment settings from admin dashboard
+  const enableCod = settings.cod_enabled !== false;
+  const enableRazorpay = settings.razorpay_enabled !== false;
+  const codExtraCharge = settings.cod_extra_charge || 0;
+  const minFreeShipping = settings.free_shipping_threshold || 999;
+  const shippingCost = settings.shipping_charge || 49;
+  const codMessage = 'Pay cash when you receive your order';
+  const razorpayMessage = 'Secure payment gateway';
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -146,6 +158,23 @@ export default function CheckoutPage() {
       console.log('Order saved to localStorage');
 
       clearCart();
+
+      // Send order received email notification
+      const orderData = {
+        id: orderId,
+        customer_name: formData.name,
+        customer_email: formData.email,
+        customer_phone: formData.phone,
+        items: items,
+        total_amount: total,
+        created_at: new Date().toISOString(),
+      };
+      
+      // Send order received notification asynchronously
+      EmailNotificationService.sendOrderReceived(orderData).catch(error => {
+        console.error('Failed to send order received email:', error);
+        // Don't show error to user as it's not critical to the order process
+      });
 
       toast({
         title: 'Order placed successfully!',
@@ -528,6 +557,7 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
+                  {enableCod && (
                   <div
                     className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${paymentMethod === 'cod'
                       ? 'border-[#F5C842] bg-[#F5C842]/10'
@@ -546,11 +576,13 @@ export default function CheckoutPage() {
                       </div>
                       <div>
                         <h3 className="font-semibold text-[#2C3E50]">Cash on Delivery</h3>
-                        <p className="text-sm text-gray-600">Pay cash when you receive your order</p>
+                        <p className="text-sm text-gray-600">{codMessage}</p>
                       </div>
                     </div>
                   </div>
+                  )}
 
+                  {enableRazorpay && (
                   <div
                     className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${paymentMethod === 'razorpay'
                       ? 'border-[#F5C842] bg-[#F5C842]/10'
@@ -569,10 +601,11 @@ export default function CheckoutPage() {
                       </div>
                       <div>
                         <h3 className="font-semibold text-[#2C3E50]">Razorpay</h3>
-                        <p className="text-sm text-gray-600">Secure payment gateway</p>
+                        <p className="text-sm text-gray-600">{razorpayMessage}</p>
                       </div>
                     </div>
                   </div>
+                  )}
                 </div>
 
                 {/* Payment Details - Only show for card payments */}

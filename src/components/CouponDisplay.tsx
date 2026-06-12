@@ -4,10 +4,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Ticket, Sparkles, Calendar, IndianRupee } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 
 export default function CouponDisplay() {
   const { coupons, loading } = useCoupons();
   const [visibleCoupons, setVisibleCoupons] = useState(3);
+  const { settings } = useSiteSettings();
+
+  // If coupons are disabled in settings, don't render
+  if (settings.coupons_enabled === false || settings.show_coupon_on_homepage === false) {
+    return null;
+  }
+
+  // Get coupon code from settings
+  const homepageCouponCode = settings.homepage_coupon_code || 'ANIME10';
+  const homepageCouponDiscount = settings.homepage_coupon_discount || 10;
 
   // Filter active coupons that are currently valid
   const activeCoupons = coupons.filter(coupon => {

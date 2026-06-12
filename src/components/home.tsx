@@ -15,6 +15,7 @@ import {
   getTimeBasedFeaturedProducts 
 } from '@/utils/timeBasedProducts';
 import { motion } from 'framer-motion';
+import HeroBannerCarousel from '@/components/HeroBannerCarousel';
 
 export default function Home() {
   const { settings } = useSiteSettings();
@@ -82,154 +83,96 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-paper">
-      {/* Hero Section with Time-Based Theme */}
-      <section className={`relative overflow-hidden py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-br ${timeTheme.bgColor} border-b-2 border-black transition-colors duration-1000`}>
-        {/* Time-Based Greeting Banner */}
-        <motion.div 
-          key={timeOfDay}
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20"
-        >
-          <div className={`${timeTheme.accentColor} text-white px-6 py-2 rounded-full border-2 border-black neo-shadow font-bold text-sm flex items-center gap-2`}>
-            <span className="text-lg">{timeTheme.emoji}</span>
-            <span>{greeting}</span>
-          </div>
-        </motion.div>
-
-        {/* Abstract Background Elements */}
-        <div className="absolute top-20 right-0 w-64 h-64 bg-secondary rounded-full filter blur-3xl opacity-20 animate-pulse-glow"></div>
-        <div className="absolute bottom-10 left-10 w-48 h-48 bg-primary rounded-full filter blur-3xl opacity-20 animate-pulse-glow"></div>
-
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
-            <div className="space-y-8">
-              <div className="inline-block bg-secondary border-2 border-black px-4 py-1 neo-shadow-sm transform -rotate-2">
-                <span className="font-bold text-black uppercase tracking-wider text-sm">Official Merch Store</span>
-              </div>
-              <h1 className="text-6xl md:text-7xl font-heading font-bold text-foreground leading-[0.9] tracking-tighter">
-                {settings?.hero_title || 'UNLEASH YOUR OTAKU SOUL'}
-              </h1>
-              <p className="text-xl md:text-2xl text-foreground/80 font-medium max-w-lg leading-relaxed">
-                {settings?.hero_subtitle || 'The ultimate collection of premium anime merchandise. Figurines, apparel, and more.'}
-              </p>
-              <div className="flex flex-col sm:flex-row gap-6 pt-4">
-                <Button className="neo-btn bg-primary text-white hover:bg-primary/90 h-14 px-8 text-lg rounded-none">
-                  Shop Now <ArrowRight className="ml-2 w-6 h-6" />
-                </Button>
-                <Button variant="outline" className="neo-btn bg-white text-foreground hover:bg-gray-50 h-14 px-8 text-lg rounded-none">
-                  View Collection
-                </Button>
-              </div>
-
-              <div className="flex items-center gap-4 text-sm font-bold text-foreground/60 pt-4">
-                <div className="flex -space-x-2">
-                  {[1, 2, 3, 4].map(i => (
-                    <div key={i} className="w-8 h-8 rounded-full bg-gray-200 border-2 border-black"></div>
-                  ))}
-                </div>
-                <p>Trusted by 10k+ otakus</p>
-              </div>
-            </div>
-
-            <div className="relative">
-              <div className="relative z-10 bg-white border-4 border-black p-2 neo-shadow-lg transform rotate-2 hover:rotate-0 transition-transform duration-500 rounded-xl">
-                <img
-                  src="https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800&q=80"
-                  alt="Anime Merchandise"
-                  className="w-full h-auto border-2 border-black rounded-lg grayscale hover:grayscale-0 transition-all duration-500"
-                />
-              </div>
-
-              {/* Floating stickers */}
-              <div className="absolute -top-12 -right-8 z-20 animate-float bg-secondary border-2 border-black p-4 rounded-full neo-shadow">
-                <Sparkles className="w-8 h-8 text-black" />
-              </div>
-              <div className="absolute -bottom-8 -left-8 z-20 animate-float animation-delay-2000 bg-primary border-2 border-black p-4 rounded-full neo-shadow">
-                <Package className="w-8 h-8 text-white" />
-              </div>
-
-              {/* Decorative elements */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] border-2 border-black rounded-full opacity-10 border-dashed animate-spin-slow pointer-events-none"></div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Hero Banner Carousel - 10 Amazing Rotating Banners */}
+      <HeroBannerCarousel />
 
       {/* Featured Products - Time Based */}
-      <section className="py-20 bg-white border-b-2 border-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-end mb-16">
-            <div>
-              <motion.div
-                key={timeOfDay}
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="flex items-center gap-3 mb-2"
-              >
-                <span className="text-4xl">{timeTheme.emoji}</span>
-                <div>
-                  <span className={`text-sm font-bold ${timeTheme.textColor} uppercase tracking-wide`}>{timeTheme.description}</span>
-                  <h2 className="text-4xl font-heading font-extrabold text-foreground uppercase tracking-tight">Featured Loot</h2>
-                </div>
-              </motion.div>
-              <div className={`h-2 w-24 ${timeTheme.accentColor} mt-2 border-2 border-black`}></div>
+      {settings.featured_section_enabled !== false && (
+        <section className="py-20 bg-white border-b-2 border-black">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-end mb-16">
+              <div>
+                <motion.div
+                  key={timeOfDay}
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="flex items-center gap-3 mb-2"
+                >
+                  <span className="text-4xl">{timeTheme.emoji}</span>
+                  <div>
+                    <span className={`text-sm font-bold ${timeTheme.textColor} uppercase tracking-wide`}>{timeTheme.description}</span>
+                    <h2 className="text-4xl font-heading font-extrabold text-foreground uppercase tracking-tight">
+                      {settings.featured_section_title || 'Featured Loot'}
+                    </h2>
+                  </div>
+                </motion.div>
+                <div className={`h-2 w-24 ${timeTheme.accentColor} mt-2 border-2 border-black`}></div>
+                {settings.featured_section_subtitle && (
+                  <p className="text-gray-600 mt-2">{settings.featured_section_subtitle}</p>
+                )}
+              </div>
+              <Button variant="outline" className="neo-btn bg-white h-12">
+                View All <ArrowRight className="ml-2 w-4 h-4" />
+              </Button>
             </div>
-            <Button variant="outline" className="neo-btn bg-white h-12">
-              View All <ArrowRight className="ml-2 w-4 h-4" />
-            </Button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {featuredProducts.length > 0 ? (
+                featuredProducts.map((product, index) => (
+                  <motion.div 
+                    key={`${timeOfDay}-${product.id}`}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="transform hover:-translate-y-2 transition-transform duration-200"
+                  >
+                    <ProductCard product={product} />
+                  </motion.div>
+                ))
+              ) : (
+                <div className="col-span-4 text-center py-12 border-2 border-dashed border-gray-300 rounded-xl">
+                  <p className="text-xl text-gray-400 font-heading">Loading amazing products...</p>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {featuredProducts.length > 0 ? (
-              featuredProducts.map((product, index) => (
+        </section>
+      )}
+
+      {/* New Arrivals Banner */}
+      {settings.new_arrivals_enabled !== false && (
+        <section className="py-24 bg-primary border-b-2 border-black overflow-hidden relative">
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="flex justify-between items-center mb-12">
+              <div>
+                <span className="bg-black text-white px-3 py-1 font-bold text-sm uppercase mb-2 inline-block transform -rotate-1">Fresh Drop</span>
+                <h2 className="text-4xl md:text-5xl font-heading font-extrabold text-white uppercase tracking-tight neo-shadow-sm">
+                  {settings.new_arrivals_title || 'New Arrivals'}
+                </h2>
+                {settings.new_arrivals_subtitle && (
+                  <p className="text-white/80 mt-2">{settings.new_arrivals_subtitle}</p>
+                )}
+              </div>
+              <Button className="neo-btn bg-secondary text-black hover:bg-secondary/90 border-white h-12">
+                Check em out <ArrowRight className="ml-2 w-4 h-4" />
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {newArrivals.map((product, index) => (
                 <motion.div 
-                  key={`${timeOfDay}-${product.id}`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  key={`${timeOfDay}-new-${product.id}`}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: index * 0.1 }}
-                  className="transform hover:-translate-y-2 transition-transform duration-200"
+                  className="neo-card bg-white p-2"
                 >
                   <ProductCard product={product} />
                 </motion.div>
-              ))
-            ) : (
-              <div className="col-span-4 text-center py-12 border-2 border-dashed border-gray-300 rounded-xl">
-                <p className="text-xl text-gray-400 font-heading">Loading amazing products...</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* New Arrivals Banner */}
-      <section className="py-24 bg-primary border-b-2 border-black overflow-hidden relative">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="flex justify-between items-center mb-12">
-            <div>
-              <span className="bg-black text-white px-3 py-1 font-bold text-sm uppercase mb-2 inline-block transform -rotate-1">Fresh Drop</span>
-              <h2 className="text-4xl md:text-5xl font-heading font-extrabold text-white uppercase tracking-tight neo-shadow-sm">New Arrivals</h2>
+              ))}
             </div>
-            <Button className="neo-btn bg-secondary text-black hover:bg-secondary/90 border-white h-12">
-              Check em out <ArrowRight className="ml-2 w-4 h-4" />
-            </Button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {newArrivals.map((product, index) => (
-              <motion.div 
-                key={`${timeOfDay}-new-${product.id}`}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.1 }}
-                className="neo-card bg-white p-2"
-              >
-                <ProductCard product={product} />
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Best Sellers */}
       <section className="py-20 bg-paper border-b-2 border-black">
@@ -288,11 +231,13 @@ export default function Home() {
       </section>
 
       {/* Coupons */}
-      <section className="py-12 bg-black text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <CouponDisplay />
-        </div>
-      </section>
+      {settings.show_coupon_on_homepage !== false && settings.coupons_enabled !== false && (
+        <section className="py-12 bg-black text-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <CouponDisplay />
+          </div>
+        </section>
+      )}
     </div>
   );
 }

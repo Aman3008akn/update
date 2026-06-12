@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, MapPin } from 'lucide-react';
+import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 
 interface SaleNotification {
   id: string;
@@ -9,7 +10,7 @@ interface SaleNotification {
   timeAgo: string;
 }
 
-const cities = [
+const defaultCities = [
   'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 
   'Kolkata', 'Pune', 'Ahmedabad', 'Jaipur', 'Lucknow'
 ];
@@ -28,8 +29,21 @@ const sampleProducts = [
 ];
 
 export default function LiveSalesNotification() {
-  const [notifications, setNotifications] = useState<SaleNotification[]>([]);
   const [currentNotification, setCurrentNotification] = useState<SaleNotification | null>(null);
+  const { settings } = useSiteSettings();
+
+  // If notifications are disabled in settings, don't render
+  if (settings.live_notifications_enabled === false) {
+    return null;
+  }
+
+  // Get cities from settings or use defaults
+  const cities = settings.live_notifications_cities && Array.isArray(settings.live_notifications_cities) 
+    ? settings.live_notifications_cities 
+    : defaultCities;
+  
+  // Get interval from settings (default 20000ms = 20 seconds)
+  const notificationInterval = settings.live_notifications_interval || 20000;
 
   useEffect(() => {
     const generateNotification = (): SaleNotification => {
@@ -45,7 +59,7 @@ export default function LiveSalesNotification() {
       };
     };
 
-    // Show notification every 15-30 seconds
+    // Show notification every interval
     const showNotification = () => {
       const newNotification = generateNotification();
       setCurrentNotification(newNotification);
@@ -59,14 +73,14 @@ export default function LiveSalesNotification() {
     // Initial notification after 5 seconds
     const initialTimer = setTimeout(showNotification, 5000);
 
-    // Regular notifications
-    const interval = setInterval(showNotification, Math.random() * 15000 + 15000);
+    // Regular notifications based on settings interval
+    const interval = setInterval(showNotification, notificationInterval);
 
     return () => {
       clearTimeout(initialTimer);
       clearInterval(interval);
     };
-  }, []);
+  }, [cities, notificationInterval]);
 
   return (
     <AnimatePresence>

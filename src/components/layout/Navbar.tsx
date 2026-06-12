@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 import { useState, useEffect, useRef } from 'react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { products } from '@/data/products';
@@ -20,6 +21,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function Navbar() {
   const { totalItems } = useCart();
   const { user, logout, isAuthenticated } = useAuth();
+  const { settings } = useSiteSettings();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<typeof products>([]);
@@ -79,9 +81,9 @@ export default function Navbar() {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 group">
             <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center border-2 border-black neo-shadow-sm group-hover:translate-x-[-2px] group-hover:translate-y-[-2px] transition-transform">
-              <span className="text-white font-heading font-bold text-2xl">M</span>
+              <span className="text-white font-heading font-bold text-2xl">{settings.navbar_logo_text?.charAt(0) || 'M'}</span>
             </div>
-            <span className="text-2xl font-heading font-bold text-foreground tracking-tight">MythManga</span>
+            <span className="text-2xl font-heading font-bold text-foreground tracking-tight">{settings.navbar_logo_text || 'MythManga'}</span>
           </Link>
 
           {/* Search Bar - Desktop with Smart Search */}
@@ -152,29 +154,33 @@ export default function Navbar() {
           {/* Right Side Icons */}
           <div className="flex items-center space-x-4">
             {/* Wishlist */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hidden sm:flex relative hover:bg-transparent group"
-              onClick={() => navigate('/wishlist')}
-            >
-              <Heart className="w-6 h-6 text-foreground group-hover:text-accent group-hover:fill-accent transition-colors" />
-            </Button>
+            {settings.navbar_show_wishlist !== false && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hidden sm:flex relative hover:bg-transparent group"
+                onClick={() => navigate('/wishlist')}
+              >
+                <Heart className="w-6 h-6 text-foreground group-hover:text-accent group-hover:fill-accent transition-colors" />
+              </Button>
+            )}
 
             {/* Cart */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative hover:bg-transparent group"
-              onClick={() => navigate('/cart')}
-            >
-              <ShoppingCart className="w-6 h-6 text-foreground group-hover:text-primary transition-colors" />
-              {totalItems > 0 && (
-                <Badge className="absolute -top-1 -right-1 bg-secondary text-black border-2 border-black hover:bg-secondary px-1.5 py-0.5 text-xs font-bold neo-shadow-sm">
-                  {totalItems}
-                </Badge>
-              )}
-            </Button>
+            {settings.navbar_show_cart !== false && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative hover:bg-transparent group"
+                onClick={() => navigate('/cart')}
+              >
+                <ShoppingCart className="w-6 h-6 text-foreground group-hover:text-primary transition-colors" />
+                {totalItems > 0 && (
+                  <Badge className="absolute -top-1 -right-1 bg-secondary text-black border-2 border-black hover:bg-secondary px-1.5 py-0.5 text-xs font-bold neo-shadow-sm">
+                    {totalItems}
+                  </Badge>
+                )}
+              </Button>
+            )}
 
             {/* User Menu */}
             <DropdownMenu>
