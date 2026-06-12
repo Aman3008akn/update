@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, Heart, Search, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,8 @@ export default function Navbar() {
   const { user, logout, isAuthenticated } = useAuth();
   const { settings } = useSiteSettings();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isCheckoutPage = location.pathname === '/checkout';
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<typeof products>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
@@ -73,6 +75,38 @@ export default function Navbar() {
     logout();
     navigate('/');
   };
+
+  if (isCheckoutPage) {
+    return (
+      <nav className="sticky top-0 z-40 bg-paper border-b-2 border-black shadow-sm mt-0 pt-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20">
+            <Link to="/" className="flex items-center space-x-3 group" aria-label="Go to homepage">
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center border-2 border-black neo-shadow-sm group-hover:translate-x-[-2px] group-hover:translate-y-[-2px] transition-transform">
+                <span className="text-white font-heading font-bold text-2xl">{settings.navbar_logo_text?.charAt(0) || 'M'}</span>
+              </div>
+              <span className="text-2xl font-heading font-bold text-foreground tracking-tight">{settings.navbar_logo_text || 'MythManga'}</span>
+            </Link>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative hover:bg-transparent group"
+              onClick={() => navigate('/cart')}
+              aria-label="View cart"
+            >
+              <ShoppingCart className="w-6 h-6 text-foreground group-hover:text-primary transition-colors" />
+              {totalItems > 0 && (
+                <Badge className="absolute -top-1 -right-1 bg-secondary text-black border-2 border-black hover:bg-secondary px-1.5 py-0.5 text-xs font-bold neo-shadow-sm">
+                  {totalItems}
+                </Badge>
+              )}
+            </Button>
+          </div>
+        </div>
+      </nav>
+    );
+  }
 
   return (
     <nav className="sticky top-0 z-40 bg-paper border-b-2 border-black shadow-sm mt-0 pt-0">

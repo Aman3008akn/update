@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { CreditCard, MapPin, Ticket, Sparkles, Wallet, User, Mail, Phone, Home, Globe, Hash, User2, Mailbox, Building, Map } from 'lucide-react';
+import { CreditCard, MapPin, Ticket, Sparkles, Wallet, User, Mail, Phone, Home, Globe, Hash, ShieldCheck, Truck, RotateCcw, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { loadRazorpay, createRazorpayOrder, openRazorpayCheckout, verifyPayment } from '@/lib/razorpay';
@@ -30,7 +30,7 @@ export default function CheckoutPage() {
   const minFreeShipping = settings.free_shipping_threshold || 999;
   const shippingCost = settings.shipping_charge || 49;
   const codMessage = 'Pay cash when you receive your order';
-  const razorpayMessage = 'Secure payment gateway';
+  const razorpayMessage = 'Pay securely online';
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -50,6 +50,7 @@ export default function CheckoutPage() {
   const [couponMessage, setCouponMessage] = useState('');
   const [isCouponApplied, setIsCouponApplied] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card'); // 'card', 'cod', or 'razorpay'
+  const [isCouponOpen, setIsCouponOpen] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -388,16 +389,16 @@ export default function CheckoutPage() {
             {/* Forms */}
             <div className="lg:col-span-2 space-y-8">
               {/* Shipping Address */}
-              <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-3xl p-8 border border-gray-700 shadow-2xl transform transition-all duration-300 hover:shadow-yellow-500/20">
+              <div className="bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 rounded-3xl p-6 sm:p-8 border border-gray-600 shadow-2xl transform transition-all duration-300 hover:shadow-yellow-500/20">
                 <div className="flex items-center gap-4 mb-8">
                   <div className="p-3 bg-gradient-to-r from-yellow-500 to-amber-500 rounded-xl shadow-lg">
                     <MapPin className="w-6 h-6 text-black" />
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-500">
-                      Premium Shipping Address
+                      Delivery Details
                     </h2>
-                    <p className="text-gray-400 text-sm">Enter your luxury delivery details</p>
+                    <p className="text-gray-400 text-sm">Enter your shipping address and contact details</p>
                   </div>
                 </div>
                 <div className="grid md:grid-cols-2 gap-6">
@@ -413,7 +414,7 @@ export default function CheckoutPage() {
                         value={formData.name}
                         onChange={handleChange}
                         required
-                        className="pl-10 bg-gray-800 border border-gray-700 text-white rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 py-3 transition-all duration-300"
+                        className="pl-10 bg-gray-950/90 border border-gray-600 text-white placeholder:text-gray-500 rounded-xl shadow-inner focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 py-3 transition-all duration-300"
                         placeholder="Enter your full name"
                       />
                     </div>
@@ -431,7 +432,7 @@ export default function CheckoutPage() {
                         value={formData.email}
                         onChange={handleChange}
                         required
-                        className="pl-10 bg-gray-800 border border-gray-700 text-white rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 py-3 transition-all duration-300"
+                        className="pl-10 bg-gray-950/90 border border-gray-600 text-white placeholder:text-gray-500 rounded-xl shadow-inner focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 py-3 transition-all duration-300"
                         placeholder="your.email@example.com"
                       />
                     </div>
@@ -448,7 +449,7 @@ export default function CheckoutPage() {
                         value={formData.phone}
                         onChange={handleChange}
                         required
-                        className="pl-10 bg-gray-800 border border-gray-700 text-white rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 py-3 transition-all duration-300"
+                        className="pl-10 bg-gray-950/90 border border-gray-600 text-white placeholder:text-gray-500 rounded-xl shadow-inner focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 py-3 transition-all duration-300"
                         placeholder="+91 XXXXXXXXXX"
                       />
                     </div>
@@ -465,7 +466,7 @@ export default function CheckoutPage() {
                         value={formData.street}
                         onChange={handleChange}
                         required
-                        className="pl-10 bg-gray-800 border border-gray-700 text-white rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 py-3 transition-all duration-300"
+                        className="pl-10 bg-gray-950/90 border border-gray-600 text-white placeholder:text-gray-500 rounded-xl shadow-inner focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 py-3 transition-all duration-300"
                         placeholder="123 Main Street"
                       />
                     </div>
@@ -482,7 +483,7 @@ export default function CheckoutPage() {
                         value={formData.city}
                         onChange={handleChange}
                         required
-                        className="pl-10 bg-gray-800 border border-gray-700 text-white rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 py-3 transition-all duration-300"
+                        className="pl-10 bg-gray-950/90 border border-gray-600 text-white placeholder:text-gray-500 rounded-xl shadow-inner focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 py-3 transition-all duration-300"
                         placeholder="Your city"
                       />
                     </div>
@@ -499,7 +500,7 @@ export default function CheckoutPage() {
                         value={formData.state}
                         onChange={handleChange}
                         required
-                        className="pl-10 bg-gray-800 border border-gray-700 text-white rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 py-3 transition-all duration-300"
+                        className="pl-10 bg-gray-950/90 border border-gray-600 text-white placeholder:text-gray-500 rounded-xl shadow-inner focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 py-3 transition-all duration-300"
                         placeholder="Your state"
                       />
                     </div>
@@ -516,7 +517,7 @@ export default function CheckoutPage() {
                         value={formData.zipCode}
                         onChange={handleChange}
                         required
-                        className="pl-10 bg-gray-800 border border-gray-700 text-white rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 py-3 transition-all duration-300"
+                        className="pl-10 bg-gray-950/90 border border-gray-600 text-white placeholder:text-gray-500 rounded-xl shadow-inner focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 py-3 transition-all duration-300"
                         placeholder="123456"
                       />
                     </div>
@@ -600,7 +601,7 @@ export default function CheckoutPage() {
                         )}
                       </div>
                       <div>
-                        <h3 className="font-semibold text-[#2C3E50]">Razorpay</h3>
+                        <h3 className="font-semibold text-[#2C3E50]">Online Payment</h3>
                         <p className="text-sm text-gray-600">{razorpayMessage}</p>
                       </div>
                     </div>
@@ -668,17 +669,15 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                {/* Razorpay Information - Only show for Razorpay payments */}
+                {/* Online Payment Information */}
                 {paymentMethod === 'razorpay' && (
                   <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
                     <div className="flex items-start">
-                      <div className="w-5 h-5 bg-purple-600 rounded-full flex items-center justify-center mt-0.5 mr-2">
-                        <span className="text-white text-xs font-bold">R</span>
-                      </div>
+                      <ShieldCheck className="w-5 h-5 text-purple-700 mt-0.5 mr-2" />
                       <div>
-                        <h3 className="font-semibold text-purple-800">Razorpay Payment</h3>
+                        <h3 className="font-semibold text-purple-800">Secure Online Payment</h3>
                         <p className="text-sm text-purple-700 mt-1">
-                          You will be redirected to Razorpay to complete your payment securely.
+                          Complete your payment through a secure checkout window.
                         </p>
                       </div>
                     </div>
@@ -695,12 +694,17 @@ export default function CheckoutPage() {
                 {/* Items */}
                 <div className="space-y-4 mb-6">
                   {items.map(item => (
-                    <div key={item.id} className="flex justify-between">
-                      <div>
-                        <p className="font-medium text-[#2C3E50]">{item.name}</p>
-                        <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+                    <div key={item.id} className="flex items-center gap-3 rounded-xl bg-white p-3 border border-gray-200 shadow-sm">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="h-16 w-16 flex-shrink-0 rounded-lg object-cover border border-gray-200"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-[#2C3E50] leading-snug line-clamp-2">{item.name}</p>
+                        <p className="text-sm text-gray-600 mt-1">Qty: {item.quantity}</p>
+                        <p className="font-bold text-[#2C3E50] mt-1">₹{(item.price * item.quantity).toLocaleString('en-IN')}</p>
                       </div>
-                      <p className="font-medium text-[#2C3E50]">₹{(item.price * item.quantity).toLocaleString('en-IN')}</p>
                     </div>
                   ))}
                 </div>
@@ -730,44 +734,63 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                {/* Premium Coupon Section */}
+                {/* Coupon Section */}
                 <motion.div
-                  className="mb-6"
+                  className="mb-6 rounded-2xl border border-gray-200 bg-white p-4"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <Label htmlFor="couponCode" className="flex items-center gap-2 mb-2">
-                    <div className="p-1.5 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-md">
-                      <Ticket className="w-4 h-4 text-white" />
-                    </div>
-                    <span className="font-semibold text-[#2C3E50]">Apply Coupon</span>
-                  </Label>
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Input
-                        id="couponCode"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                        placeholder="Enter coupon code"
-                        className="pl-10 pr-4 py-3 bg-white border-2 border-gray-300 rounded-xl focus:border-[#F5C842] focus:ring-2 focus:ring-[#F5C842]/20 transition-all"
-                      />
-                      <Ticket className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    </div>
-                    <Button
-                      type="button"
-                      onClick={handleCouponApply}
-                      className="bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white font-bold py-2 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
-                    >
+                  <button
+                    type="button"
+                    onClick={() => setIsCouponOpen(prev => !prev)}
+                    className="flex w-full items-center justify-between text-left"
+                    aria-expanded={isCouponOpen}
+                    aria-controls="coupon-panel"
+                  >
+                    <span className="flex items-center gap-2 font-semibold text-[#2C3E50]">
+                      <span className="p-1.5 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-md">
+                        <Ticket className="w-4 h-4 text-white" />
+                      </span>
+                      Have a coupon?
+                    </span>
+                    <span className="flex items-center gap-1 text-sm font-bold text-amber-600">
                       Apply
-                    </Button>
-                  </div>
+                      <ChevronDown className={`h-4 w-4 transition-transform ${isCouponOpen ? 'rotate-180' : ''}`} />
+                    </span>
+                  </button>
+
+                  {isCouponOpen && (
+                    <div id="coupon-panel" className="mt-4 space-y-3">
+                      <Label htmlFor="couponCode" className="sr-only">Coupon code</Label>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <div className="relative flex-1">
+                          <Input
+                            id="couponCode"
+                            value={couponCode}
+                            onChange={(e) => setCouponCode(e.target.value)}
+                            placeholder="Enter coupon code"
+                            className="pl-10 pr-4 py-3 bg-white border-2 border-gray-300 rounded-xl focus:border-[#F5C842] focus:ring-2 focus:ring-[#F5C842]/20 transition-all"
+                          />
+                          <Ticket className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={handleCouponApply}
+                          className="w-full sm:w-auto bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white font-bold py-2 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl"
+                        >
+                          Apply
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
                   {couponMessage && (
                     <motion.div
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.3 }}
-                      className={`mt-2 p-3 rounded-xl text-sm font-medium flex items-center gap-2 ${isCouponApplied
+                      className={`mt-3 p-3 rounded-xl text-sm font-medium flex items-center gap-2 ${isCouponApplied
                         ? 'bg-green-100 text-green-800 border border-green-200'
                         : 'bg-red-100 text-red-800 border border-red-200'
                         }`}
@@ -786,10 +809,23 @@ export default function CheckoutPage() {
                   type="submit"
                   className="w-full bg-gradient-to-r from-[#F5C842] to-amber-500 hover:from-[#F5C842]/90 hover:to-amber-500/90 text-[#2C3E50] font-bold py-4 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
                 >
-                  {paymentMethod === 'cod' ? 'Place Order (COD)' :
-                    paymentMethod === 'razorpay' ? 'Proceed to Razorpay' :
-                      'Place Order'}
+                  {paymentMethod === 'cod' ? 'Complete Order (COD)' : 'Complete Order'}
                 </Button>
+
+                <div className="mt-4 grid grid-cols-1 gap-2 text-sm font-semibold text-gray-700 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+                  <div className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 border border-gray-200">
+                    <ShieldCheck className="h-4 w-4 text-green-600" />
+                    Secure Payment
+                  </div>
+                  <div className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 border border-gray-200">
+                    <Truck className="h-4 w-4 text-blue-600" />
+                    Fast Shipping
+                  </div>
+                  <div className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 border border-gray-200">
+                    <RotateCcw className="h-4 w-4 text-amber-600" />
+                    Easy Returns
+                  </div>
+                </div>
               </div>
             </div>
           </div>
